@@ -1,65 +1,56 @@
-import express from "express"
-import bodyParser from "body-parser"
-import puppeteer from "puppeteer"
-import cors from "cors"
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
+import puppeteer from "puppeteer-core";
+import chromium from "chrome-aws-lambda";
+
 const app = express();
 
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use("/static", express.static("public"));
 app.use(cors({
   origin: "https://bhandal-roadways-doc-maker.vercel.app",
-
-}))
+}));
 
 app.post("/generate-pdf", async (req, res) => {
   const { html } = req.body;
-
-  if (!html) {
-    return res.status(400).send("HTML content is required");
-  }
+  if (!html) return res.status(400).send("HTML content is required");
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      args: chromium.args,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
     });
-    const page = await browser.newPage();
 
-    // Transparent background
-    await page.setContent(
-      `
+    const page = await browser.newPage();
+    await page.setContent(`
       <html>
         <head>
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+          <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
           <style>
             body { background-color: transparent; }
             #bilty-container { background-color: transparent; }
           </style>
         </head>
-        <body>
-          ${html}
-        </body>
+        <body>${html}</body>
       </html>
-      `,
-      { waitUntil: "networkidle0" }
-    );
+    `, { waitUntil: "networkidle0" });
 
     const pdfBuffer = await page.pdf({
       format: "A4",
-      printBackground: true, // text/images render properly
+      printBackground: true,
       margin: { top: "20px" },
-      preferCSSPageSize: true
+      preferCSSPageSize: true,
     });
 
     await browser.close();
 
-    // PDF as download
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": "attachment; filename=bilty.pdf",
       "Content-Length": pdfBuffer.length
     });
-
     res.send(pdfBuffer);
   } catch (err) {
     console.error(err);
@@ -67,6 +58,4 @@ app.post("/generate-pdf", async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
+app.listen(5000, () => console.log("Server running on port 5000"));
