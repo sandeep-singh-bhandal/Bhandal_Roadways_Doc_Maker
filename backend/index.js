@@ -1,8 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import puppeteer from "puppeteer-core";
-import chromium from "chrome-aws-lambda";
+import puppeteer from "puppeteer";
 
 const app = express();
 
@@ -18,9 +17,17 @@ app.post("/generate-pdf", async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: "/usr/bin/google-chrome-stable",
-      headless: chromium.headless,
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+        "--disable-extensions"
+      ]
     });
 
     const page = await browser.newPage();
