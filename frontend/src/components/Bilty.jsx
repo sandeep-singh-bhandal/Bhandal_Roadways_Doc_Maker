@@ -8,7 +8,7 @@ const Bilty = () => {
     const element = document.getElementById("bilty-container");
     const htmlContent = element.outerHTML;
 
-    const response = await fetch("http://localhost:5000/generate-pdf", {
+    const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ html: htmlContent }),
@@ -41,7 +41,7 @@ const Bilty = () => {
           <div className="flex justify-between items-center">
             {/* Logo and Company Info Left */}
             <img
-              src="http://localhost:5000/static/logo.png"
+              src="https://bhandal-roadways-doc-maker.onrender.com/static/logo.png"
               alt="Bhandal Roadways Logo"
               className="size-30 ml-4 -mt-16"
             />{" "}
@@ -324,7 +324,7 @@ const Bilty = () => {
                 <div className="text-sm text-right mt-1">
                   {biltyData.includeDigitalStamp && (
                     <img
-                      src="http://localhost:5000/static/stamp.jpg"
+                      src="https://bhandal-roadways-doc-maker.onrender.com/static/stamp.jpg"
                       alt="stamp"
                       className="size-20 mx-auto"
                     />
