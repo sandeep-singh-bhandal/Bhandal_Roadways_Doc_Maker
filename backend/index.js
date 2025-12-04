@@ -19,7 +19,7 @@ app.post("/generate-pdf", async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       args: chromium.args,
-      executablePath: await chromium.executablePath,
+      executablePath: "/usr/bin/google-chrome-stable",
       headless: chromium.headless,
     });
 
