@@ -7,7 +7,7 @@ const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use("/static", express.static("public"));
 app.use(cors({
-  origin: "https://bhandal-roadways-doc-maker.vercel.app/",
+  origin: "https://bhandal-roadways-doc-maker.vercel.app",
 
 }))
 
