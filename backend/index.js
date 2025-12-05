@@ -39,13 +39,13 @@ app.post("/generate-pdf", async (req, res) => {
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
           <style>
           @font-face {
-          font-family: 'Impact';
+          font-family: 'ImpactFont';
           src: url('/static/impact.woff') format('woff');
           font-weight: normal;
           font-style: normal;
-        }
+          }
             body {
-            font-family: 'ImpactCustom', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            font-family: 'ImpactFont', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
             background-color: transparent; 
              }
             #bilty-container { background-color: transparent; }
