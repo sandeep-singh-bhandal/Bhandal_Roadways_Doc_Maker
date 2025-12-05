@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../Appcontext";
+import { useNavigate } from "react-router-dom";
 
 const BiltyForm = () => {
   const [noOfPackages, setNoOfPackages] = useState(5);
   const [isOpen, setIsOpen] = useState(false);
   const [includeDigitalStamp, setIncludeDigitalStamp] = useState(false);
   const { biltyData, setBiltyData } = useAppContext();
+  const navigate = useNavigate();
 
   const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -55,7 +57,7 @@ const BiltyForm = () => {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        generatePdf()
+        navigate("/bilty")
       }}
       className="flex flex-col items-center text-sm text-slate-800"
     >
