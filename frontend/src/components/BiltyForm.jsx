@@ -38,24 +38,6 @@ const BiltyForm = () => {
     });
   };
 
-  const generatePdf = async () => {
-    const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(biltyData), 
-    });
-
-    if (response.ok) {
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "bilty.pdf";
-      link.click();
-    } else {
-      alert("PDF generation failed");
-    }
-  };
 
   useEffect(() => {
     setBiltyData((prev) => ({
