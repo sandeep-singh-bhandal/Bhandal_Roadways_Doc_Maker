@@ -241,7 +241,7 @@ const BiltyForm = () => {
         type="submit"
         className="flex items-center w-80 mb-6 justify-center gap-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2.5  rounded-full transition"
       >
-        Generate
+        See Preview
         <svg
           className="mt-0.5"
           width="21"

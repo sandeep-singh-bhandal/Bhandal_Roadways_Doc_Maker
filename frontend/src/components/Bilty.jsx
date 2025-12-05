@@ -41,7 +41,7 @@ const Bilty = () => {
           <div className="flex justify-between items-center">
             {/* Logo and Company Info Left */}
             <img
-              src="https://bhandal-roadways-doc-maker.onrender.com/static/logo.png"
+              src="/static/logo.png"
               alt="Bhandal Roadways Logo"
               className="size-30 ml-4 -mt-16"
             />{" "}
@@ -324,7 +324,7 @@ const Bilty = () => {
                 <div className="text-sm text-right mt-1">
                   {biltyData.includeDigitalStamp && (
                     <img
-                      src="https://bhandal-roadways-doc-maker.onrender.com/static/stamp.jpg"
+                      src="/static/stamp.jpg"
                       alt="stamp"
                       className="size-20 mx-auto"
                     />

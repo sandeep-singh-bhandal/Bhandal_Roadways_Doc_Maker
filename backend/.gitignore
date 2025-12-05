@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Ignore the local cache directory created by Puppeteer or other tools
+.cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

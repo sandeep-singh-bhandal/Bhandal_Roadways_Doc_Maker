@@ -2,6 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import puppeteer from "puppeteer";
+import path from "path";
 
 const app = express();
 
@@ -15,6 +16,9 @@ app.use(
     ],
   })
 );
+
+app.use("/static", express.static(path.join(process.cwd(), "public")));
+
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
   const { html } = req.body;
@@ -34,8 +38,21 @@ app.post("/generate-pdf", async (req, res) => {
         <head>
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
           <style>
-            body { background-color: transparent; }
+          @font-face {
+          font-family: 'Impact';
+          src: url('/static/impact.woff') format('woff');
+          font-weight: normal;
+          font-style: normal;
+        }
+            body {
+            font-family: 'ImpactCustom', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            background-color: transparent; 
+             }
             #bilty-container { background-color: transparent; }
+            .size-4 { width: 1rem; height: 1rem; }
+            .size-20 { width: 5rem; height: 5rem; }
+            .size-30 { width: 7.5rem; height: 7.5rem; }
+            .wrap-break-word { word-wrap: break-word; } 
           </style>
         </head>
         <body>
