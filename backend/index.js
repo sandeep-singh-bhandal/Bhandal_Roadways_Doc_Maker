@@ -41,7 +41,7 @@ app.get("/bilty-preview", (req, res) => {
   };
   const date = new Date().toLocaleDateString();
 
-  res.render("bilty", { bilty,date });
+  res.render("bilty", { bilty, date });
 });
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
@@ -55,7 +55,10 @@ app.post("/generate-pdf", async (req, res) => {
     const html = await ejs.renderFile(filePath, { bilty, date });
 
     // Launch Puppeteer
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
 
@@ -63,7 +66,7 @@ app.post("/generate-pdf", async (req, res) => {
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "20px"},
+      margin: { top: "20px" },
     });
 
     await browser.close();
