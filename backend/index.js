@@ -60,7 +60,7 @@ app.post("/generate-pdf", async (req, res) => {
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "networkidle2" });
 
     // Generate PDF
     const pdfBuffer = await page.pdf({
