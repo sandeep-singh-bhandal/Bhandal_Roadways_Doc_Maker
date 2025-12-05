@@ -8,7 +8,7 @@ const Bilty = () => {
     const element = document.getElementById("bilty-container");
     const htmlContent = element.outerHTML;
 
-    const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
+    const response = await fetch("http://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ html: htmlContent }),

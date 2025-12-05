@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use("/static", express.static("public"));
 app.use(cors({
-  origin: "https://bhandal-roadways-doc-maker.vercel.app",
+  origin: ["http://localhost:5173","https://bhandal-roadways-doc-maker.vercel.app"],
 }));
 
 app.post("/generate-pdf", async (req, res) => {
@@ -17,17 +17,9 @@ app.post("/generate-pdf", async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--no-first-run",
-        "--no-zygote",
-        "--single-process",
-        "--disable-extensions"
-      ]
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+
     });
 
     const page = await browser.newPage();
