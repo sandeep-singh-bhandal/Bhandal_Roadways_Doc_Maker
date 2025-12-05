@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../Appcontext";
-import { useNavigate } from "react-router-dom";
 
 const BiltyForm = () => {
   const [noOfPackages, setNoOfPackages] = useState(5);
   const [isOpen, setIsOpen] = useState(false);
   const [includeDigitalStamp, setIncludeDigitalStamp] = useState(false);
   const { biltyData, setBiltyData } = useAppContext();
-  const navigate = useNavigate();
 
   const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -40,6 +38,25 @@ const BiltyForm = () => {
     });
   };
 
+  const generatePdf = async () => {
+    const response = await fetch("http://localhost:5000/generate-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(biltyData), 
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "bilty.pdf";
+      link.click();
+    } else {
+      alert("PDF generation failed");
+    }
+  };
+
   useEffect(() => {
     setBiltyData((prev) => ({
       ...prev,
@@ -56,7 +73,7 @@ const BiltyForm = () => {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        navigate("/bilty");
+        generatePdf()
       }}
       className="flex flex-col items-center text-sm text-slate-800"
     >
