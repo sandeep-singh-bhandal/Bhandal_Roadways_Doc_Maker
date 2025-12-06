@@ -59,9 +59,11 @@ app.post("/generate-pdf", async (req, res) => {
         </body>
       </html>
       `,
-      { waitUntil: "networkidle2" }
+      {
+        waitUntil: "networkidle2",
+        timeout: 60000
+      },
     );
-
     await page.waitForTimeout(500);
 
     const pdfBuffer = await page.pdf({
