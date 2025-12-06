@@ -59,7 +59,6 @@ app.post("/generate-pdf", async (req, res) => {
         '--allow-file-access-from-files', // Enables assets loaded via file:// or similar
         '--disable-web-security' // Might be needed for local font access
       ],
-      timeout: 60000
     });
     const page = await browser.newPage();
 
