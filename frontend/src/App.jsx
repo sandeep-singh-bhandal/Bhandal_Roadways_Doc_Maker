@@ -11,7 +11,7 @@ function App() {
 
   const awakeBackend = async () => {
     try {
-      await fetch("http://localhost:5000/status");
+      await fetch("https://bhandal-roadways-doc-maker.onrender.com");
       setIsBackendAwake(true);
     } catch (error) {
       console.error("Error waking up backend:", error);
