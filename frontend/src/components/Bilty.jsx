@@ -8,7 +8,7 @@ const Bilty = () => {
     const element = document.getElementById("bilty-container");
     const htmlContent = element.outerHTML;
 
-    const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
+    const response = await fetch("http://localhost:5000/generate-pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ html: htmlContent }),
@@ -48,8 +48,7 @@ const Bilty = () => {
             {/* Placeholder for logo */}
             <div className="flex flex-col items-center">
               <h1
-                style={{ fontFamily: 'impact' }}
-                className="text-5xl font-extrabold text-center tracking-wider"
+                className="text-5xl font-extrabold text-center tracking-wider company-name-font"
               >
                 BHANDAL ROADWAYS
               </h1>
@@ -87,8 +86,7 @@ const Bilty = () => {
         <div className="mb-4 w-full">
           <div className="text-center">
             <p
-              style={{ fontFamily: "Calibri, sans-serif" }}
-              className="text-[20px] font-extrabold text-red-600 inline-block px-2"
+              className="text-[20px] font-extrabold text-red-600 inline-block px-2 consignee-copy-font"
             >
               Consignee Copy
             </p>
