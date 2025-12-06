@@ -20,6 +20,11 @@ app.use(
 
 app.use("/static", express.static(path.join(process.cwd(), "public")));
 
+
+app.get("/status", (req, res) => {
+  res.json({ success: true, msg: "Bhandal Roadways PDF Generator API is running." });
+});
+
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
   const { biltyData } = req.body;

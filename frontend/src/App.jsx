@@ -11,8 +11,9 @@ function App() {
 
   const awakeBackend = async () => {
     try {
-      await fetch("https://bhandal-roadways-doc-maker.onrender.com");
-      setIsBackendAwake(true);
+      const res = await fetch("http://localhost:5000/status");
+      const data = await res.json();
+      data.success ? setIsBackendAwake(true) : null;
     } catch (error) {
       console.error("Error waking up backend:", error);
     }
@@ -24,7 +25,7 @@ function App() {
 
   if (!isBackendAwake) {
     return (
-      <div className="h-screen flex-col flex justify-center items-center text-lg font-bold gap-3">
+      <div className="h-screen flex justify-center items-center text-lg font-bold gap-3">
         <RiLoader2Fill className="text-3xl animate-spin" />
         <div>Please wait we are setting things up for you...</div>
       </div>
