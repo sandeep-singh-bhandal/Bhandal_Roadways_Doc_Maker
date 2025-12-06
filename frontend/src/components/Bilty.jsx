@@ -41,14 +41,14 @@ const Bilty = () => {
           <div className="flex justify-between items-center">
             {/* Logo and Company Info Left */}
             <img
-              src="/static/logo.png"
+              src="https://res.cloudinary.com/dybupgtfs/image/upload/v1765005948/logo_zqfw4u.png"
               alt="Bhandal Roadways Logo"
               className="size-30 ml-4 -mt-16"
             />{" "}
             {/* Placeholder for logo */}
             <div className="flex flex-col items-center">
               <h1
-                style={{ fontFamily: "Impact, sans-serif" }}
+                style={{ fontFamily: 'impact' }}
                 className="text-5xl font-extrabold text-center tracking-wider"
               >
                 BHANDAL ROADWAYS
@@ -324,7 +324,7 @@ const Bilty = () => {
                 <div className="text-sm text-right mt-1">
                   {biltyData.includeDigitalStamp && (
                     <img
-                      src="/static/stamp.jpg"
+                      src="https://res.cloudinary.com/dybupgtfs/image/upload/v1765005946/stamp_z29wox.jpg"
                       alt="stamp"
                       className="size-20 mx-auto"
                     />

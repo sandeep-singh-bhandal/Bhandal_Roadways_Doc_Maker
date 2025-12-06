@@ -3,25 +3,9 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import puppeteer from "puppeteer";
 import path from "path";
-import fs from "fs";
+
 
 const app = express();
-
-function encodeImageToBase64(filePath, mimeType) {
-  try {
-    const absolutePath = path.join(process.cwd(), 'public', filePath);
-    const data = fs.readFileSync(absolutePath);
-    const base64 = data.toString('base64');
-    return `data:${mimeType};base64,${base64}`;
-  } catch (error) {
-    console.error(`Error encoding image ${filePath}:`, error.message);
-    // Return a broken link so the program doesn't crash
-    return '';
-  }
-}
-
-const LOGO_BASE64 = encodeImageToBase64('logo.png', 'image/png');
-const STAMP_BASE64 = encodeImageToBase64('stamp.jpg', 'image/jpeg');
 
 // Middleware
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -45,20 +29,13 @@ app.post("/generate-pdf", async (req, res) => {
   }
 
   try {
-    let finalHtml = html;
-    if (LOGO_BASE64) {
-      finalHtml = finalHtml.replace('/static/logo.png', LOGO_BASE64);
-    }
-    if (STAMP_BASE64) {
-      finalHtml = finalHtml.replace('/static/stamp.jpg', STAMP_BASE64);
-    }
     const browser = await puppeteer.launch({
       args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--allow-file-access-from-files', // Enables assets loaded via file:// or similar
-        '--disable-web-security' // Might be needed for local font access
-      ],
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--allow-file-access-from-files', // Enables assets loaded via file:// or similar
+            '--disable-web-security' // Might be needed for local font access
+        ],
     });
     const page = await browser.newPage();
 
@@ -70,8 +47,8 @@ app.post("/generate-pdf", async (req, res) => {
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
           <style>
           @font-face {
-          font-family: 'Impact';
-          src: url('/static/impact.ttf') format('ttf');
+          font-family: 'impact';
+          src: url('https://res.cloudinary.com/dybupgtfs/raw/upload/v1765005946/impact_f2ejy6.ttf') format('ttf');
           font-weight: normal;
           font-style: normal;
           }
@@ -86,7 +63,7 @@ app.post("/generate-pdf", async (req, res) => {
           </style>
         </head>
         <body>
-          ${finalHtml}
+          ${html}
         </body>
       </html>
       `,
