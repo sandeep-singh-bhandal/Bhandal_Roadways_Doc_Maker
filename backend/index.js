@@ -123,8 +123,8 @@ app.post("/generate-pdf", async (req, res) => {
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Playwrite+NO:wght@100..400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
       @font-face {
-        font-family: "impact";
-        src: url("https://res.cloudinary.com/dybupgtfs/raw/upload/v1765005946/impact_f2ejy6.ttf")
+        font-family: 'impact';
+        src: url("https://bhandal-roadways-doc-maker.onrender.com/static/impact.ttf")
           format("ttf");
         font-weight: normal;
         font-style: normal;
