@@ -121,14 +121,10 @@ app.post("/generate-pdf", async (req, res) => {
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Playwrite+NO:wght@100..400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@100..900&family=Playwrite+NO:wght@100..400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
-      @font-face {
-        font-family: 'impact';
-        src: url("https://bhandal-roadways-doc-maker.onrender.com/static/impact.ttf")
-          format("ttf");
-        font-weight: normal;
-        font-style: normal;
-      }
       body {
         font-family: "Roboto";
         font-size: 14px;
@@ -215,9 +211,10 @@ app.post("/generate-pdf", async (req, res) => {
           <div class="company-info">
             <h1
               style="
-                font-family: 'impact';
-                font-size: 48px;
-                font-weight: 800;
+                font-family: 'Anton', sans-serif;
+                font-weight: 900;
+                font-style: normal;
+                font-size: 40px;
                 text-align: center;
                 letter-spacing: 0.05em;
                 margin: 0;
