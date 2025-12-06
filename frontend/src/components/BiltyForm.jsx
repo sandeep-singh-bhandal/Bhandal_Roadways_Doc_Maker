@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../Appcontext";
 import { RiLoader4Line } from "react-icons/ri";
+import { useNavigate } from "react-router-dom";
 
 const BiltyForm = () => {
   const [noOfPackages, setNoOfPackages] = useState(5);
@@ -8,6 +9,7 @@ const BiltyForm = () => {
   const [includeDigitalStamp, setIncludeDigitalStamp] = useState(false);
   const { biltyData, setBiltyData } = useAppContext();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -42,11 +44,14 @@ const BiltyForm = () => {
 
   const generatePdf = async () => {
     setLoading(true);
-    const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ biltyData }),
-    });
+    const response = await fetch(
+      "https://bhandal-roadways-doc-maker.onrender.com/generate-pdf",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ biltyData }),
+      }
+    );
 
     if (response.ok) {
       const blob = await response.blob();
@@ -79,8 +84,31 @@ const BiltyForm = () => {
         e.preventDefault();
         generatePdf();
       }}
-      className="flex flex-col items-center text-sm text-slate-800"
+      className="relative w-fit mx-auto flex flex-col items-center text-sm text-slate-800"
     >
+      <button
+        type="button"
+        onClick={()=>navigate("/")}
+        className="absolute left-0 top-5 flex items-center gap-2.5  px-4 py-2 text-sm text-gray-800 rounded bg-white hover:text-pink-500/70 hover:bg-pink-500/10 hover:border-pink-500/30 active:scale-95 transition"
+      >
+        <svg
+          width="16"
+          height="13"
+          viewBox="0 0 16 13"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M15 6.5H1M6.5 12 1 6.5 6.5 1"
+            stroke="#FDA4AF"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Back
+      </button>
+
       <h1 className="text-4xl font-bold py-4 text-center">Bilty Maker</h1>
       <div className="max-w-96 w-full px-4">
         {[
@@ -256,7 +284,9 @@ const BiltyForm = () => {
           </div>
         ))}
       </div>
-      <p className="mb-4 font-bold text-lg text-gray-700">Recheck the details again before generating</p>
+      <p className="mb-4 font-bold text-lg text-gray-700">
+        Recheck the details again before generating
+      </p>
       <button
         type="submit"
         disabled={loading}

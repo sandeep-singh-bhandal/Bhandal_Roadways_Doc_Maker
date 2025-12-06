@@ -3,10 +3,36 @@ import Home from "./components/Home";
 import Navbar from "./components/Navbar";
 import TransportingBillForm from "./components/TransportingBillForm";
 import BiltyForm from "./components/BiltyForm";
+import { useEffect, useState } from "react";
+import { RiLoader2Fill } from "react-icons/ri";
 
 function App() {
+  const [isBackendAwake, setIsBackendAwake] = useState(false);
+
+  const awakeBackend = async () => {
+    try {
+      await fetch("http://localhost:5000/status");
+      setIsBackendAwake(true);
+    } catch (error) {
+      console.error("Error waking up backend:", error);
+    }
+  };
+
+  useEffect(() => {
+    awakeBackend();
+  }, []);
+
+  if (!isBackendAwake) {
+    return (
+      <div className="h-screen flex justify-center items-center text-lg font-bold gap-3">
+        <RiLoader2Fill className="text-3xl animate-spin" />
+        <div>Please wait we are setting things up for you...</div>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="h-screen flex flex-col">
       <Navbar />
       <Routes>
         <Route path="/bilty-form" element={<BiltyForm />} />
