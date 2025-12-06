@@ -39,14 +39,13 @@ app.post("/generate-pdf", async (req, res) => {
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
           <style>
           @font-face {
-          font-family: 'ImpactFont';
-          src: url('/static/impact.woff') format('woff');
+          font-family: 'Impact';
+          src: url('/static/impact.ttf') format('ttf');
           font-weight: normal;
           font-style: normal;
           }
             body {
-            font-family: 'ImpactFont', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-            background-color: transparent; 
+              background-color: transparent; 
              }
             #bilty-container { background-color: transparent; }
             .size-4 { width: 1rem; height: 1rem; }
@@ -62,6 +61,8 @@ app.post("/generate-pdf", async (req, res) => {
       `,
       { waitUntil: "networkidle2" }
     );
+
+    await page.waitForTimeout(500);
 
     const pdfBuffer = await page.pdf({
       format: "A4",
