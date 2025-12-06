@@ -739,6 +739,12 @@ app.post("/generate-pdf", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Error generating PDF");
+  } finally {
+    // 2. GUARANTEED CLOSURE: Close the browser instance
+    if (browser) {
+      await browser.close();
+      console.log("Puppeteer browser closed successfully.");
+    }
   }
 });
 
