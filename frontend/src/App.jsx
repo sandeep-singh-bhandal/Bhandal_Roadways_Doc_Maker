@@ -3,7 +3,6 @@ import Home from "./components/Home";
 import Navbar from "./components/Navbar";
 import TransportingBillForm from "./components/TransportingBillForm";
 import BiltyForm from "./components/BiltyForm";
-import Bilty from "./components/Bilty";
 
 function App() {
   return (
@@ -11,7 +10,6 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/bilty-form" element={<BiltyForm />} />
-        <Route path="/bilty" element={<Bilty />} />
         <Route path="/transporting-bill" element={<TransportingBillForm />} />
         <Route path="/" element={<Home />} />
       </Routes>

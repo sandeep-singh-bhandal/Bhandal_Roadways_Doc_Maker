@@ -22,6 +22,7 @@ app.use("/static", express.static(path.join(process.cwd(), "public")));
 
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
+  const { biltyData } = req.body;
   try {
     const browser = await puppeteer.launch({
       args: [
@@ -33,39 +34,6 @@ app.post("/generate-pdf", async (req, res) => {
     });
     const page = await browser.newPage();
 
-    const biltyData = {
-      lrNo: "123456",
-      truckNo: "CG04-XA-7890",
-      from: "RAIPUR",
-      to: "MUMBAI",
-      consignor: {
-        name: "Saurabh Trading Co.",
-        address: "G.E Road, Industrial Area, Raipur - 492001 (C.G.)",
-        gstNumber: "22AAAAA1234A1Z7",
-      },
-      consignee: {
-        name: "Anand Logistics Pvt. Ltd.",
-        address: "LBS Marg, Kurla West, Mumbai - 400070 (MH)",
-        gstNumber: "27BBBBB5678B2Z5",
-      },
-      packages: [
-        {
-          description: "Iron Rods",
-          weight: "20.000",
-          rate: "1200.00",
-          freight: "24000.00",
-        },
-        {
-          description: "Steel Plates",
-          weight: "15.500",
-          rate: "1300.00",
-          freight: "20150.00",
-        },
-      ],
-      eWayBillNo: "111111111111",
-      invoiceNo: "aa/2025/0145",
-      includeDigitalStamp: true,
-    };
 
     const totalWeight = biltyData.packages
       .reduce((acc, item) => acc + Number(item.weight), 0)
@@ -718,7 +686,7 @@ app.post("/generate-pdf", async (req, res) => {
                 font-weight: bold;
                 width: 30%;
                 text-align: center;
-                vertical-align: top;
+                vertical-align: bottom;
               "
             >
               <div style="font-size: 14px; text-align: right; margin-top: 4px">

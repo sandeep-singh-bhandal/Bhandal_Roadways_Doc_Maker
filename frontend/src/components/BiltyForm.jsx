@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../Appcontext";
-import { useNavigate } from "react-router-dom";
+import { RiLoader4Line } from "react-icons/ri";
 
 const BiltyForm = () => {
   const [noOfPackages, setNoOfPackages] = useState(5);
   const [isOpen, setIsOpen] = useState(false);
   const [includeDigitalStamp, setIncludeDigitalStamp] = useState(false);
   const { biltyData, setBiltyData } = useAppContext();
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -40,6 +40,26 @@ const BiltyForm = () => {
     });
   };
 
+  const generatePdf = async () => {
+    setLoading(true);
+    const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ biltyData }),
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "bilty.pdf";
+      link.click();
+      setLoading(false);
+    } else {
+      alert("PDF generation failed");
+    }
+  };
 
   useEffect(() => {
     setBiltyData((prev) => ({
@@ -57,7 +77,7 @@ const BiltyForm = () => {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        navigate("/bilty")
+        generatePdf();
       }}
       className="flex flex-col items-center text-sm text-slate-800"
     >
@@ -236,25 +256,32 @@ const BiltyForm = () => {
           </div>
         ))}
       </div>
-
+      <p className="mb-4 font-bold text-lg text-gray-700">Recheck the details again before generating</p>
       <button
         type="submit"
-        className="flex items-center w-80 mb-6 justify-center gap-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2.5  rounded-full transition"
+        disabled={loading}
+        className={`flex items-center w-80 mb-6 justify-center gap-1 ${
+          loading ? "bg-gray-500" : "bg-indigo-500 hover:bg-indigo-600"
+        } text-white py-2.5  rounded-full transition`}
       >
-        See Preview
-        <svg
-          className="mt-0.5"
-          width="21"
-          height="20"
-          viewBox="0 0 21 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="m18.038 10.663-5.625 5.625a.94.94 0 0 1-1.328-1.328l4.024-4.023H3.625a.938.938 0 0 1 0-1.875h11.484l-4.022-4.025a.94.94 0 0 1 1.328-1.328l5.625 5.625a.935.935 0 0 1-.002 1.33"
-            fill="#fff"
-          />
-        </svg>
+        {loading ? "Loading" : "Generate"}
+        {loading ? (
+          <RiLoader4Line className="animate-spin size-4 mt-1" />
+        ) : (
+          <svg
+            className="mt-0.5"
+            width="21"
+            height="20"
+            viewBox="0 0 21 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m18.038 10.663-5.625 5.625a.94.94 0 0 1-1.328-1.328l4.024-4.023H3.625a.938.938 0 0 1 0-1.875h11.484l-4.022-4.025a.94.94 0 0 1 1.328-1.328l5.625 5.625a.935.935 0 0 1-.002 1.33"
+              fill="#fff"
+            />
+          </svg>
+        )}
       </button>
     </form>
   );
