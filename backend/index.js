@@ -32,20 +32,20 @@ app.post("/generate-pdf", async (req, res) => {
   try {
     browser = await puppeteer.launch({
       args: [
-            '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--allow-file-access-from-files',
-          '--disable-web-security',
-            '--disable-gpu',
-            '--single-process', // Use if memory is extremely tight
-            '--disable-dev-shm-usage', // Recommended for Linux containers
-            '--no-zygote',
-            '--no-first-run',
-            '--no-experiments',
-            '--disable-default-apps',
-            '--disable-extensions',
-            '--disable-translate',
-        ],
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--allow-file-access-from-files',
+        '--disable-web-security',
+        '--disable-gpu',
+        '--single-process', // Use if memory is extremely tight
+        '--disable-dev-shm-usage', // Recommended for Linux containers
+        '--no-zygote',
+        '--no-first-run',
+        '--no-experiments',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-translate',
+      ],
     });
     const page = await browser.newPage();
 
