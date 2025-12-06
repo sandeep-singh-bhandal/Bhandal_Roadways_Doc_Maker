@@ -118,6 +118,9 @@ app.post("/generate-pdf", async (req, res) => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bhandal Roadways Consignee Copy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Playwrite+NO:wght@100..400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <style>
       @font-face {
         font-family: "impact";
@@ -235,7 +238,7 @@ app.post("/generate-pdf", async (req, res) => {
               TRANSPORT CONTRACTOR & COMMISSION AGENT
             </p>
             <div class="flex-center" style="margin: 5px 0px; gap: 4px">
-              <i class="fa-solid fa-location-dot"></i>
+              <svg style="height:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M128 252.6C128 148.4 214 64 320 64C426 64 512 148.4 512 252.6C512 371.9 391.8 514.9 341.6 569.4C329.8 582.2 310.1 582.2 298.3 569.4C248.1 514.9 127.9 371.9 127.9 252.6zM320 320C355.3 320 384 291.3 384 256C384 220.7 355.3 192 320 192C284.7 192 256 220.7 256 256C256 291.3 284.7 320 320 320z"/></svg>
               <p style="font-size: 14px; font-weight: bold">
                 House No: 21, Harshit Vihar, Phase 05, Tatibandh, RAIPUR: 492099
                 (C.G)
@@ -252,7 +255,7 @@ app.post("/generate-pdf", async (req, res) => {
                 gap: 4px;
               "
             >
-              <i class="fa-solid fa-envelope" style="transform: scale(0.9)"></i>
+              <svg style="height:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M112 128C85.5 128 64 149.5 64 176C64 191.1 71.1 205.3 83.2 214.4L291.2 370.4C308.3 383.2 331.7 383.2 348.8 370.4L556.8 214.4C568.9 205.3 576 191.1 576 176C576 149.5 554.5 128 528 128L112 128zM64 260L64 448C64 483.3 92.7 512 128 512L512 512C547.3 512 576 483.3 576 448L576 260L377.6 408.8C343.5 434.4 296.5 434.4 262.4 408.8L64 260z"/></svg>
               <p>bhandalroadways@gmail.com</p>
             </div>
             <div
@@ -271,7 +274,7 @@ app.post("/generate-pdf", async (req, res) => {
           </div>
           <div class="contact-info" style="font-size: 12px; margin-top: -80px">
             <div class="flex-center" style="margin-top: 8px; gap: 4px">
-              <i class="fa-solid fa-phone"></i>
+              <svg style="height:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M224.2 89C216.3 70.1 195.7 60.1 176.1 65.4L170.6 66.9C106 84.5 50.8 147.1 66.9 223.3C104 398.3 241.7 536 416.7 573.1C493 589.3 555.5 534 573.1 469.4L574.6 463.9C580 444.2 569.9 423.6 551.1 415.8L453.8 375.3C437.3 368.4 418.2 373.2 406.8 387.1L368.2 434.3C297.9 399.4 241.3 341 208.8 269.3L253 233.3C266.9 222 271.6 202.9 264.8 186.3L224.2 89z"/></svg>
               <p style="font-weight: bold; font-size: 14px">+91 93016 76383</p>
             </div>
             <p style="font-weight: bold; font-size: 14px">+91 94060 21740</p>
@@ -742,14 +745,15 @@ app.post("/generate-pdf", async (req, res) => {
 </html>
 
       `,
-      { waitUntil: "networkidle2", timeout: 60000 },
+      { waitUntil: "networkidle0", timeout: 900000 },
     );
 
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true, // text/images render properly
       margin: { top: "20px" },
-      preferCSSPageSize: true
+      preferCSSPageSize: true,
+      timeout: 9000000,
     });
 
     await browser.close();
