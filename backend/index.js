@@ -1,9 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import puppeteer from "puppeteer";
 import path from "path";
-
+import PDFDocument from "pdfkit";
 
 const app = express();
 
@@ -25,736 +24,398 @@ app.get("/status", (req, res) => {
   res.json({ success: true, msg: "Bhandal Roadways PDF Generator API is running." });
 });
 
+
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
   const { biltyData } = req.body;
-  let browser;
   try {
-    browser = await puppeteer.launch({
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--allow-file-access-from-files',
-        '--disable-web-security',
-        '--disable-gpu',
-        '--single-process', // Use if memory is extremely tight
-        '--disable-dev-shm-usage', // Recommended for Linux containers
-        '--no-zygote',
-        '--no-first-run',
-        '--no-experiments',
-        '--disable-default-apps',
-        '--disable-extensions',
-        '--disable-translate',
-      ],
+  // 💡 FIX 1: Assign mockBiltyData to the 'data' variable used throughout the logic.
+  const data = biltyData;
+
+  // 💡 FIX 2: Define 'date' and 'totalWeight' variables, which were missing.
+  const date = new Date().toLocaleDateString("en-GB");
+  const totalWeight = data.packages.reduce((acc, item) => acc + (Number(item.weight) || 0), 0).toFixed(3);
+
+
+  const doc = new PDFDocument({
+    size: 'A4',
+    margin: 20
+  });
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="bilty-preview.pdf"`);
+
+  doc.pipe(res);
+
+  const MARGIN_X = 30; // Left margin
+  const PAGE_WIDTH = 595.28 - MARGIN_X * 2; // A4 width is 595.28 pts
+  let currentY = 30;
+
+  // Register custom font
+  try {
+    doc.registerFont('Impact', 'public/impact.ttf');
+    doc.registerFont('Roboto', 'public/roboto.ttf');
+  } catch (e) {
+    console.warn("Custom font not found");
+  }
+
+  // --- 2. TOP HEADER (LOGO, TITLE, CONTACTS) ---
+
+  // Logo (Approximate Positioning)
+  const LOGO_SIZE = 80;
+  try {
+    doc.image('https://res.cloudinary.com/dybupgtfs/image/upload/v1765005948/logo_zqfw4u.png', MARGIN_X, currentY, { width: LOGO_SIZE, height: LOGO_SIZE, });
+  } catch (e) {
+    // Draw a placeholder box if logo is missing
+    doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
+  }
+
+  doc
+    .fontSize(10)
+    .text('Subject to Raipur Jurisdiction', MARGIN_X + 80, currentY - 7, {
+      width: PAGE_WIDTH - 160,
+      align: 'center',
+
     });
-    const page = await browser.newPage();
+  // Title
+  doc.font('Impact')
+    .fontSize(36)
+    .text('BHANDAL ROADWAYS', MARGIN_X + 80, currentY + 2, {
+      width: PAGE_WIDTH - 160,
+      align: 'center'
+    });
+
+  // Contact Numbers (Right Side)
+  doc.font('Helvetica-Bold')
+    .fontSize(10)
+    .text('+91 93016 76383', PAGE_WIDTH - 60, currentY, { align: 'right' });
+  doc.text('+91 94060 21740', PAGE_WIDTH - 60, currentY + 12, { align: 'right' });
+  doc.text('+91 79744 79917', PAGE_WIDTH - 60, currentY + 24, { align: 'right' });
+
+  // Sub-Title and Address
+  currentY += 45;
+  const textContent = 'TRANSPORT CONTRACTOR & COMMISSION AGENT';
+
+  // The font metrics (approximations for padding)
+  const fontSize = 10;
+  const paddingY = 3; // Vertical padding
+  const lineHeight = fontSize * 1.2; // Approximate line height
+
+  // Since align: 'center' is used, we need to calculate the actual width of the text *without* alignment.
+  // PDFKit doesn't easily expose rendered text width for center alignment, so we rely on the defined area (PAGE_WIDTH).
+
+  // The bounding box will cover the entire PAGE_WIDTH minus margins
+  const boxX = MARGIN_X + 90;
+  const boxY = currentY - paddingY + 3; // Shift up by paddingY
+  const boxWidth = PAGE_WIDTH - 180;
+  const boxHeight = lineHeight + (2 * paddingY);
+
+  // 2. Draw the Black Background Box
+  doc.fillColor('black') // Set the fill color to black
+    .rect(boxX, boxY, boxWidth, boxHeight) // Define the rectangle area
+    .fill(); // Fill the area
+
+  // 3. Draw the White Text with Manual Padding Adjustment
+  doc.font('Helvetica-Bold')
+    .fontSize(fontSize)
+    .fillColor('white') // Set the text color to white
+    .text(textContent, MARGIN_X, currentY + 6, {
+      // We use MARGIN_X here and rely on 'align: center' to position the text centrally
+      align: 'center',
+      width: PAGE_WIDTH
+    });
+
+  // 4. Reset Fill Color
+  currentY += 15; // Move Y position down for the next line
+  doc.fillColor('black');
 
 
-    const totalWeight = biltyData.packages
-      .reduce((acc, item) => acc + Number(item.weight), 0)
-      .toFixed(3);
+  currentY += 10;
+  doc
+    .fontSize(10)
+    .text('House No: 21, Harshit Vihar, Phase 05, Tatibandh, RAIPUR: 492099 (C.G)', MARGIN_X, currentY, { align: 'center' });
 
-    let packageRowsHtml = biltyData.packages.map((item, index) => `
-        <tr>
-          <td style="border: 1px solid black; padding: 4px; text-align: center;">
-            ${index + 1}.
-          </td>
-          <td style="border: 1px solid black; padding: 4px;">${item.description}</td>
-          <td style="border: 1px solid black; padding: 4px;">${item.weight} MT</td>
-          <td style="border: 1px solid black; padding: 4px; text-align: center;">
-            ${item.rate}
-          </td>
-          <td style="border: 1px solid black; padding: 4px; text-align: center;">
-            ${item.freight}
-          </td>
-        </tr>
-    `).join('');
+  currentY += 16;
+  doc
+    .fontSize(10)
+    .text('bhandalroadways@gmail.com', MARGIN_X, currentY, { align: 'center' });
 
-    if (biltyData.packages.length <= 3) {
-      for (let i = 0; i < 3; i++) {
-        packageRowsHtml += `
-          <tr style="height: 28px;">
-            <td style="border: 1px solid black; padding: 4px; text-align: center;"> </td>
-            <td style="border: 1px solid black; padding: 4px;"> </td>
-            <td style="border: 1px solid black; padding: 4px;"> </td>
-            <td style="border: 1px solid black; padding: 4px; text-align: center;"></td>
-            <td style="border: 1px solid black; padding: 4px; text-align: center;"></td>
-          </tr>
-        `;
-      }
+  currentY += 15;
+  doc.font('Helvetica-Bold')
+    .fontSize(12)
+    .text(`Transporter ID: 22AHSPB6197L1ZV`, MARGIN_X, currentY, { align: 'center' });
+
+  currentY += 20;
+  doc.font('Helvetica-Bold')
+    .fontSize(12)
+    .fillColor('red')
+    .text(`Driver Copy`, MARGIN_X - 15, currentY, { align: 'center' });
+
+  currentY += 20;
+
+  // --- 3. LR & DATE / FROM & TO BOX ---
+
+  const box1Y = currentY;
+  const box1Height = 50;
+
+  // Draw main box border
+
+  // LR No. (Top Left)
+  doc.font('Helvetica-Bold')
+    .fontSize(10)
+    .fillColor('black')
+    .text('L.R No:', MARGIN_X + 5, box1Y + 5);
+
+  doc.font('Helvetica-Bold')
+    .fontSize(14)
+    .fillColor('red')
+    .text(data.lrNo, MARGIN_X + 42, box1Y + 1);
+
+  // Date (Top Right)
+  doc.font('Helvetica-Bold')
+    .fontSize(10)
+    .fillColor('black')
+    .text('Date:', MARGIN_X + 60 + PAGE_WIDTH - 150, box1Y + 5);
+  doc.font('Helvetica-Bold')
+    .text(date, MARGIN_X + 60 + PAGE_WIDTH - 120, box1Y + 5);
+
+  // Truck No, From, To
+  doc.font('Helvetica-Bold')
+    .fontSize(9);
+
+  doc.rect(MARGIN_X, currentY + 22, PAGE_WIDTH, 17).stroke();
+
+  // Truck No
+  let truckX = MARGIN_X + 5;
+  doc.text('Truck No:', truckX, box1Y + 27);
+  doc.text(data.truckNo, truckX + 44, box1Y + 27);
+  doc.moveTo(MARGIN_X + 170, box1Y + 39).lineTo(MARGIN_X + 170, box1Y + 22).stroke();
+
+  // From
+  let fromX = MARGIN_X + 175;
+  doc.text('From:', fromX, box1Y + 27);
+  doc.text(data.from, fromX + 27, box1Y + 27, { width: 140 });
+  doc.moveTo(MARGIN_X + 370, box1Y + 39).lineTo(MARGIN_X + 370, box1Y + 22).stroke();
+
+  // To
+  let toX = MARGIN_X + 375;
+  doc.text('To:', toX, box1Y + 27);
+  doc.text(data.to, toX + 16, box1Y + 27, { width: 180 });
+
+  currentY = box1Y + box1Height;
+
+  // --- 4. CONSIGNOR / CONSIGNEE BOX ---
+
+  const consigY = currentY;
+  const consigHeight = 70;
+
+
+  // Left (Consignor)
+  let consigX = MARGIN_X + 5;
+  doc.font('Helvetica').fontSize(10);
+
+  doc.text('Consignor:', consigX, consigY + 5);
+  doc.font('Helvetica-Bold').text(data.consignor.name, consigX + 51, consigY + 5);
+
+  doc.font('Helvetica').text('Address:', consigX, consigY + 23);
+  doc.font('Helvetica-Bold').text(data.consignor.address, consigX + 41, consigY + 23, { width: PAGE_WIDTH / 2 - 70 });
+
+  doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
+  doc.font('Helvetica-Bold').text(data.consignor.gstNumber, consigX + 41, consigY + 52);
+
+  // Right (Consignee)
+  consigX = MARGIN_X + PAGE_WIDTH / 2 + 5;
+
+  doc.font('Helvetica').text('Consignee:', consigX, consigY + 5);
+  doc.font('Helvetica-Bold').text(data.consignee.name, consigX + 51, consigY + 5);
+
+  doc.font('Helvetica').text('Address:', consigX, consigY + 23);
+  doc.font('Helvetica-Bold').text(data.consignee.address, consigX + 41, consigY + 23, { width: PAGE_WIDTH / 2 - 70 });
+
+  doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
+  doc.font('Helvetica-Bold').text(data.consignee.gstNumber, consigX + 41, consigY + 52);
+
+  currentY = consigY + consigHeight;
+
+  // --- 5. PACKAGE DATA TABLE ---
+  const tableY = currentY + 10;
+  const rowHeight = 18;
+  const headerHeight = 20;
+
+  // Define column layout (Total width = 535)
+  const tableColumns = [
+    { name: "S. No.", width: 45, align: 'center', field: 'index' },
+    { name: "Description of Load", width: 230, align: 'center', field: 'description' },
+    { name: "Quantity", width: 90, align: 'center', field: 'weight' },
+    { name: "Rate", width: 85, align: 'center', field: 'rate' },
+    { name: "FREIGHT", width: 85, align: 'center', field: 'freight' }
+  ];
+
+  // Calculate starting X coordinates for columns
+  let columnStart = MARGIN_X;
+  tableColumns.forEach(col => {
+    col.x = columnStart;
+    columnStart += col.width;
+  });
+
+  // --- DRAW TABLE HEADERS ---
+  doc.font('Helvetica-Bold').fontSize(9);
+  doc.rect(MARGIN_X, tableY, PAGE_WIDTH, headerHeight).fillAndStroke('#f0f0f0', 'black');
+
+  tableColumns.forEach(col => {
+    doc.fillColor('black')
+      .text(col.name, col.x, tableY + 6, { width: col.width, align: col.align });
+  });
+
+  // Draw vertical column separators
+  let currentSeparatorX = MARGIN_X;
+  tableColumns.forEach((col, index) => {
+    if (index > 0) {
+      doc.moveTo(currentSeparatorX, tableY).lineTo(currentSeparatorX, tableY + headerHeight).stroke('black');
     }
+    currentSeparatorX += col.width;
+  });
 
-    const digitalStampHtml = biltyData.includeDigitalStamp ? `
-      <img
-        src="https://res.cloudinary.com/dybupgtfs/image/upload/v1765005946/stamp_z29wox.jpg"
-        alt="stamp"
-        style="width: 80px; height: 80px; display: block; margin: 0 auto;"
-      />
-    ` : '';
+  let dataY = tableY + headerHeight;
+  const dataRows = data.packages // Take up to 3 for the main view
 
-    // Transparent background
-    await page.setContent(
-      `
-      <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bhandal Roadways Consignee Copy</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Playwrite+NO:wght@100..400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@100..900&family=Playwrite+NO:wght@100..400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: "Roboto";
-        font-size: 14px;
-        margin: 0;
-        padding: 0;
+  for (let i = 0; i < dataRows.length; i++) {
+    const rowData = dataRows[i];
+
+    // Draw Row Border
+    doc.rect(MARGIN_X, dataY, PAGE_WIDTH, rowHeight).stroke('black');
+
+    doc.font('Helvetica-Bold').fontSize(9);
+
+    tableColumns.forEach((col, colIndex) => {
+      let textValue = '';
+
+      if (col.field === 'index') {
+        textValue = `${i + 1}.`;
+      } else if (rowData) {
+        textValue = rowData[col.field];
+        if (col.field === 'weight' && textValue) textValue += ' MT';
       }
-      .bilty-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 16px;
+
+      doc.fillColor('black')
+        .text(textValue, col.x + 2, dataY + 5, { width: col.width - 4, align: col.align });
+
+      // Draw inner vertical line
+      if (colIndex < tableColumns.length - 1) {
+        doc.moveTo(col.x + col.width, dataY).lineTo(col.x + col.width, dataY + rowHeight).stroke('black');
       }
-      .header-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .company-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-      .contact-info {
-        text-align: right;
-      }
-      .flex-center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .grid-4-col {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-      }
-      .grid-2-col {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      p {
-        margin: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <div
-      id="bilty-container"
-      class="bilty-container"
-      style="
-        max-width: 800px;
-        margin: auto;
-        padding: 16px;
-        background-color: transparent;
-        font-size: 14px;
-      "
-    >
-      <header>
-        <p
-          style="
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 2px;
-            text-decoration: underline;
-          "
-        >
-          Subject to Raipur Jurisdiction
-        </p>
-        <div class="header-flex">
-          <img
-            src="https://res.cloudinary.com/dybupgtfs/image/upload/v1765005948/logo_zqfw4u.png"
-            alt="Bhandal Roadways Logo"
-            style="
-              width: 120px;
-              height: auto;
-              margin-left: 16px;
-              margin-top: -70px;
-            "
-          />
-          <div class="company-info">
-            <h1
-              style="
-                font-family: 'Anton', sans-serif;
-                font-weight: 900;
-                font-style: normal;
-                font-size: 40px;
-                text-align: center;
-                letter-spacing: 0.05em;
-                margin: 0;
-              "
-            >
-              BHANDAL ROADWAYS
-            </h1>
-            <p
-              style="
-                font-size: 14px;
-                font-weight: 600;
-                background-color: black;
-                color: white;
-                padding: 1px 64px;
-                margin: 5px 0;
-              "
-            >
-              TRANSPORT CONTRACTOR & COMMISSION AGENT
-            </p>
-            <div class="flex-center" style="margin: 5px 0px; gap: 4px">
-              <svg style="height:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M128 252.6C128 148.4 214 64 320 64C426 64 512 148.4 512 252.6C512 371.9 391.8 514.9 341.6 569.4C329.8 582.2 310.1 582.2 298.3 569.4C248.1 514.9 127.9 371.9 127.9 252.6zM320 320C355.3 320 384 291.3 384 256C384 220.7 355.3 192 320 192C284.7 192 256 220.7 256 256C256 291.3 284.7 320 320 320z"/></svg>
-              <p style="font-size: 14px; font-weight: bold">
-                House No: 21, Harshit Vihar, Phase 05, Tatibandh, RAIPUR: 492099
-                (C.G)
-              </p>
-            </div>
-            <div
-              style="
-                font-size: 18px;
-                font-weight: bold;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-top: 4px;
-                gap: 4px;
-              "
-            >
-              <svg style="height:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M112 128C85.5 128 64 149.5 64 176C64 191.1 71.1 205.3 83.2 214.4L291.2 370.4C308.3 383.2 331.7 383.2 348.8 370.4L556.8 214.4C568.9 205.3 576 191.1 576 176C576 149.5 554.5 128 528 128L112 128zM64 260L64 448C64 483.3 92.7 512 128 512L512 512C547.3 512 576 483.3 576 448L576 260L377.6 408.8C343.5 434.4 296.5 434.4 262.4 408.8L64 260z"/></svg>
-              <p>bhandalroadways@gmail.com</p>
-            </div>
-            <div
-              style="
-                font-size: 18px;
-                font-weight: bold;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin: 8px 0;
-                gap: 4px;
-              "
-            >
-              Transporter ID: 22AHSPB6197L1ZV
-            </div>
-          </div>
-          <div class="contact-info" style="font-size: 12px; margin-top: -80px">
-            <div class="flex-center" style="margin-top: 8px; gap: 4px">
-              <svg style="height:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M224.2 89C216.3 70.1 195.7 60.1 176.1 65.4L170.6 66.9C106 84.5 50.8 147.1 66.9 223.3C104 398.3 241.7 536 416.7 573.1C493 589.3 555.5 534 573.1 469.4L574.6 463.9C580 444.2 569.9 423.6 551.1 415.8L453.8 375.3C437.3 368.4 418.2 373.2 406.8 387.1L368.2 434.3C297.9 399.4 241.3 341 208.8 269.3L253 233.3C266.9 222 271.6 202.9 264.8 186.3L224.2 89z"/></svg>
-              <p style="font-weight: bold; font-size: 14px">+91 93016 76383</p>
-            </div>
-            <p style="font-weight: bold; font-size: 14px">+91 94060 21740</p>
-            <p style="font-weight: bold; font-size: 14px">+91 79744 79917</p>
-          </div>
-        </div>
-      </header>
-
-      <div style="margin-bottom: 16px; width: 100%">
-        <div style="text-align: center">
-          <p
-            style="
-              font-size: 20px;
-              font-weight: 800;
-              color: rgb(220, 38, 38);
-              display: inline-block;
-              padding: 0 8px;
-            "
-          >
-            Consignee Copy
-          </p>
-        </div>
-      </div>
-
-      <div
-        class="grid-4-col"
-        style="
-          font-size: 14px;
-          font-weight: bold;
-          margin-bottom: 16px;
-          display: flex;
-          flex-wrap: wrap;
-        "
-      >
-        <div
-          style="
-            width: 100%;
-            margin-left: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-          "
-        >
-          <p>
-            L.R No:
-            <span
-              style="
-                font-size: 20px;
-                font-weight: bold;
-                color: rgb(239, 68, 68);
-              "
-            >
-              ${biltyData.lrNo}
-            </span>
-          </p>
-          <div
-            style="
-              width: 50%;
-              display: flex;
-              justify-content: flex-end;
-              align-items: center;
-              margin-right: 8px;
-            "
-          >
-            <p>
-              Date:
-              <span style="font-weight: bold">
-                ${new Date().toLocaleDateString("en-GB")}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        <div style="width: 100%; border: 1px solid black; display: flex">
-          <p
-            style="
-              width: 33.33%;
-              border-right: 1px solid black;
-              margin-left: 8px;
-              padding: 4px 0;
-            "
-          >
-            Truck No:
-            <span style="font-weight: bold; text-transform: uppercase">
-              ${biltyData.truckNo}
-            </span>
-          </p>
-          <p
-            style="
-              width: 33.33%;
-              border-right: 1px solid black;
-              margin-left: 8px;
-              padding: 4px 0;
-            "
-          >
-            From:
-            <span style="font-weight: bold"
-              >${biltyData.from}
-          </p>
-          <p style="width: 33.33%; margin-left: 8px; padding: 4px 0">
-            To:
-            <span style="font-weight: bold"
-              >${biltyData.to}</span
-            >
-          </p>
-        </div>
-      </div>
-
-      <div
-        class="grid-2-col"
-        style="margin-bottom: 16px; font-size: 14px; display: flex"
-      >
-        <div style="padding: 8px; width: 50%; border-right: none">
-          <p>
-            Consignor:
-            <span style="font-weight: bold"
-              >${biltyData.consignor.name}</span
-            >
-          </p>
-          <p style="margin-top: 4px; line-height: 1.25">
-            Address:
-            <span style="font-weight: bold"
-              >${biltyData.consignor.address}</span
-            >
-          </p>
-          <p style="margin-top: 8px">
-            <span>GST No:</span>
-            <span style="font-weight: bold"
-              >
-                ${biltyData.consignor.gstNumber}
-              </span
-            >
-          </p>
-        </div>
-        <div style="padding: 8px; width: 50%">
-          <p>
-            Consignee:
-            <span style="font-weight: bold">
-             ${biltyData.consignee.name}</span
-            >
-          </p>
-          <p style="margin-top: 4px">
-            Address:
-            <span style="font-weight: bold; word-break: break-word">
-              ${biltyData.consignee.address}
-            </span>
-          </p>
-          <p></p>
-          <p style="margin-top: 8px">
-            GST No:
-            <span style="font-weight: bold">
-              ${biltyData.consignee.gstNumber}
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <table
-        style="
-          border-collapse: collapse;
-          border: 1px solid black;
-          font-size: 14px;
-        "
-      >
-        <thead>
-          <tr
-            style="
-              background-color: rgb(243, 244, 246);
-              font-weight: bold;
-              text-align: center;
-            "
-          >
-            <th style="border: 1px solid black; padding: 4px; width: 8.33%">
-              S. No.
-            </th>
-            <th style="border: 1px solid black; padding: 4px; width: 41.67%">
-              Description of Load
-            </th>
-            <th style="border: 1px solid black; padding: 4px; width: 16.67%">
-              Quantity
-            </th>
-            <th style="border: 1px solid black; padding: 4px; width: 16.67%">
-              Rate
-            </th>
-            <th style="border: 1px solid black; padding: 4px; width: 16.67%">
-              FREIGHT
-            </th>
-          </tr>
-        </thead>
-        <tbody style="text-align: center; font-weight: bold">
-          ${packageRowsHtml}
-          <tr>
-            <td
-              colspan="1"
-              style="border: 1px solid black; padding: 4px; font-weight: bold"
-            ></td>
-            <td
-              colspan="1"
-              style="border: 1px solid black; padding: 4px; font-weight: bold"
-            ></td>
-            <td
-              style="
-                border: 1px solid black;
-                padding: 4px;
-                font-weight: bold;
-                font-size: 14px;
-              "
-            >
-              Total:
-                ${totalWeight}
-              MT
-            </td>
-            <td colspan="1" style="border: 1px solid black; padding: 4px"></td>
-            <td colspan="1" style="border: 1px solid black; padding: 4px"></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <table
-        style="
-          width: 100%;
-          border-right: 1px solid black;
-          border-left: 1px solid black;
-          border-bottom: 1px solid black;
-          font-size: 14px;
-        "
-      >
-        <tbody style="font-weight: bold">
-          <tr>
-            <td
-              style="
-                border-right: 1px solid black;
-                border-bottom: 1px solid black;
-                text-align: left;
-                padding: 4px;
-                font-weight: bold;
-                width: 25%;
-                vertical-align: middle;
-              "
-            >
-              e-Way Bill:
-                ${biltyData.eWayBillNo}
-            </td>
-
-            <td
-              style="
-                border-right: 1px solid black;
-                border-bottom: none;
-                text-align: left;
-                font-size: 12px;
-                padding: 4px;
-                font-weight: bold;
-                width: 24.9%;
-                vertical-align: top;
-              "
-            >
-              • The Goods are accepted for carrier subject to terms and
-              condition overleaf.
-            </td>
-
-            <td
-              style="
-                border-right: 1px solid black;
-                border-bottom: 1px solid black;
-                padding: 4px;
-                width: 16.67%;
-              "
-            ></td>
-
-            <td
-              style="
-                border-right: 1px solid black;
-                border-bottom: 1px solid black;
-                text-align: center;
-                font-size: 18px;
-                padding: 4px;
-                font-weight: bold;
-                width: 16.67%;
-              "
-            >
-              Balance
-            </td>
-
-            <td
-              style="
-                text-align: center;
-                border-right: 1px solid black;
-                border-bottom: 1px solid black;
-                padding: 4px;
-                font-weight: bold;
-                width: 16.67%;
-              "
-            >
-              As per decided rate
-            </td>
-          </tr>
-
-          <tr style="border-bottom: 1px solid black">
-            <td
-              style="
-                border-right: 1px solid black;
-                text-align: left;
-                padding: 4px;
-                font-weight: bold;
-                width: 25%;
-                vertical-align: middle;
-              "
-            >
-              <div>
-                <p style="margin-bottom: 4px">
-                  Invoice No.:
-                    ${biltyData.invoiceNo}
-                </p>
-                <p style="text-transform: uppercase">Value: As per invoice</p>
-              </div>
-            </td>
-
-            <td
-              style="
-                border-right: 1px solid black;
-                text-align: left;
-                font-size: 12px;
-                padding: 4px;
-                font-weight: bold;
-                width: 24.9%;
-                vertical-align: top;
-              "
-            >
-              • We are only broker not responsible for any type of claim (i.e.
-              theft, damage, shortage, leakage, brokerage etc).
-            </td>
-
-            <td
-              style="
-                border-right: 1px solid black;
-                text-align: center;
-                font-size: 24px;
-                padding: 4px;
-                font-weight: bold;
-                width: 33.43%;
-              "
-              colspan="2"
-            >
-              To Pay Total
-            </td>
-
-            <td
-              style="
-                border-right: 1px solid black;
-                text-align: center;
-                padding: 4px;
-                font-weight: bold;
-                width: 16.67%;
-              "
-            ></td>
-          </tr>
-
-          <tr>
-            <td
-              style="
-                border-right: 1px solid black;
-                text-align: left;
-                padding: 4px;
-                font-weight: bold;
-                width: 22%;
-                vertical-align: middle;
-              "
-            >
-              <div>
-                <p style="margin-bottom: 8px">HDFC A/C: 50200098240792</p>
-                <p style="text-transform: uppercase">IFSC CODE: HDFC0003692</p>
-              </div>
-            </td>
-
-            <td
-              colspan="2"
-              style="
-                border-right: 1px solid black;
-                text-align: center;
-                font-size: 16px;
-                padding: 4px;
-                font-weight: bold;
-                width: 48%;
-                vertical-align: middle;
-              "
-            >
-              <div style="margin: 12px 0">
-                <p>GST Tax Will Be Paid By</p>
-                <div
-                  style="
-                    display: flex;
-                    gap: 16px;
-                    justify-content: center;
-                    margin-top: 8px;
-                  "
-                >
-                  <label
-                    style="
-                      display: flex;
-                      align-items: center;
-                      cursor: pointer;
-                      margin-bottom: 16px;
-                    "
-                  >
-                    <input
-                      type="checkbox"
-                      style="height: 16px; width: 16px; margin-right: 4px"
-                    />
-                    <span
-                      style="font-size: 14px; color: #1f2937; font-weight: bold"
-                    >
-                      Consignor
-                    </span>
-                  </label>
-
-                  <label
-                    style="
-                      display: flex;
-                      align-items: center;
-                      cursor: pointer;
-                      margin-bottom: 16px;
-                    "
-                  >
-                    <input
-                      type="checkbox"
-                      style="height: 16px; width: 16px; margin-right: 4px"
-                    />
-                    <span
-                      style="font-size: 14px; color: #1f2937; font-weight: bold"
-                    >
-                      Consignee
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </td>
-
-            <td
-              colspan="2"
-              style="
-                border-right: 1px solid black;
-                font-size: 24px;
-                padding: 4px;
-                font-weight: bold;
-                width: 30%;
-                text-align: center;
-                vertical-align: bottom;
-              "
-            >
-              <div style="font-size: 14px; text-align: right; margin-top: 4px">
-                ${digitalStampHtml}
-                <p
-                  style="
-                    font-weight: normal;
-                    margin-right: 8px;
-                    margin-top: 4px; /* Default margin if stamp is present */
-                  "
-                >
-                  For, <span style="font-weight: bold">Bhandal Roadways</span>
-                </p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </body>
-</html>
-
-      `,
-      { waitUntil: "networkidle0", timeout: 900000 },
-    );
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true, // text/images render properly
-      margin: { top: "20px" },
-      preferCSSPageSize: true,
-      timeout: 9000000,
     });
 
-    await browser.close();
+    dataY += rowHeight;
+  }
 
-    // PDF as download
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": "attachment; filename=bilty.pdf",
-      "Content-Length": pdfBuffer.length
-    });
+  currentY = dataY;
 
-    res.send(pdfBuffer);
+  // --- 6. TOTAL ROW ---
+  const totalY = currentY;
+  const totalRowHeight = 20;
+
+  doc.rect(MARGIN_X, totalY, PAGE_WIDTH, totalRowHeight).stroke('black'); // Full border
+
+  // Total Weight Cell
+  const totalWeightX = tableColumns[2].x;
+  const totalWeightWidth = tableColumns[2].width;
+
+  doc.font('Helvetica-Bold').fontSize(10);
+  doc.text(`Total: ${totalWeight} MT`, totalWeightX, totalY + 6, { width: totalWeightWidth, align: 'center' });
+
+  // Draw vertical separators for other columns
+  doc.moveTo(tableColumns[1].x, totalY).lineTo(tableColumns[1].x, totalY + totalRowHeight).stroke('black');
+  doc.moveTo(tableColumns[2].x + totalWeightWidth, totalY).lineTo(tableColumns[2].x + totalWeightWidth, totalY + totalRowHeight).stroke('black');
+  doc.moveTo(tableColumns[3].x + tableColumns[3].width, totalY).lineTo(tableColumns[3].x + tableColumns[3].width, totalY + totalRowHeight).stroke('black');
+
+
+  currentY = totalY + totalRowHeight;
+
+  // --- 7. FINAL BOTTOM SECTION ---
+
+  const finalY = currentY;
+  const finalHeight = 30;
+
+  doc.rect(MARGIN_X, finalY, PAGE_WIDTH, finalHeight + 5).stroke('black');
+  doc.rect(MARGIN_X, finalY + 35, PAGE_WIDTH, finalHeight * 2).stroke('black');
+  doc.rect(MARGIN_X, finalY + 95, PAGE_WIDTH, finalHeight * 2.5).stroke('black');
+
+  // Draw major internal separators
+  const COL1_END = MARGIN_X + 140; // Invoice/eWayBill
+  const COL2_END = COL1_END + 135; // Terms and Conditions
+  const COL3_END = COL2_END + 90; // Balance / To Pay
+  const COL4_END = COL3_END + 85; // Balance / To Pay
+
+  doc.moveTo(COL1_END, finalY).lineTo(COL1_END, finalY + finalHeight + 140).stroke('black');
+  doc.moveTo(COL2_END, finalY).lineTo(COL2_END, finalY + finalHeight + 65).stroke('black');
+  doc.moveTo(COL3_END, finalY).lineTo(COL3_END, finalY + finalHeight + 5).stroke('black');
+  doc.moveTo(COL4_END, finalY).lineTo(COL4_END, finalY + finalHeight + 65).stroke('black');
+  doc.moveTo(COL3_END, finalY + finalHeight + 65).lineTo(COL3_END, finalY + finalHeight + 140).stroke('black');
+
+  // Col 1: E-Way/Invoice/Bank Details
+  doc.font('Helvetica-Bold').fontSize(10);
+  doc.text(`e-Way Bill: ${data.eWayBillNo}`, MARGIN_X + 5, finalY + 16);
+  doc.text(`Invoice No: ${data.invoiceNo}`, MARGIN_X + 5, finalY + 50);
+  doc.text(`Value: AS PER INVOICE`, MARGIN_X + 5, finalY + 70);
+
+  doc.text(`HDFC A/C: 50200098240792`, MARGIN_X + 5, finalY + 120);
+  doc.text(`IFSC CODE: HDFC0003692`, MARGIN_X + 5, finalY + 140);
+
+  // Col 2: Terms and Conditions
+  doc.fontSize(8);
+  const terms = [
+    "• The Goods are accepted for carrier subject to terms and condition overleaf.",
+    "• We are only broker not responsible for any type of claim (i.e. theft, damage, shortage, leakage, brokerage etc)."
+  ];
+  let termsY = finalY + 5;
+  terms.forEach(term => {
+    doc.text(term, COL1_END + 5, termsY, { width: 125 });
+    termsY += 36
+  });
+
+  // Col 3/4: Balance / To Pay / Stamp
+
+  // Top Right (Balance)
+  doc.font('Helvetica-Bold').fontSize(9).text('BALANCE', COL3_END, finalY + 13, { width: 90, align: 'center' });
+  doc.text('AS PER DECIDED RATE', COL4_END, finalY + 10, { width: 90, align: 'center' });
+
+  // Middle Right (To Pay)
+  doc.fontSize(16)
+  doc.text('TO PAY TOTAL', COL2_END + 5, finalY + finalHeight / 2 + 45, { width: 160, align: 'center' });
+
+  // Digital Stamp Area
+  if (data.includeDigitalStamp) {
+    // Placeholder for digital stamp image
+    try {
+      // Replace with your actual stamp path
+      doc.image('public/stamp.jpg', COL3_END + 70, finalY + 100, { width: 50, height: 50 });
+    } catch (e) {
+      // Placeholder box if image is missing
+      doc.rect(COL3_END + 20, finalY + 55, 40, 40).stroke();
+    }
+  }
+
+  // For: Bhandal Roadways
+  doc.font('Helvetica-Bold').fontSize(9).fillColor('black');
+  doc.text(`For, BHANDAL ROADWAYS`, COL3_END + 40, finalY + finalHeight + 127, { width: 125, align: 'right' });
+
+
+  // Col 2 Bottom: GST Tax Paid By Checkboxes (Manual Boxes)
+  doc.font('Helvetica-Bold').fontSize(10).text('GST TAX WILL BE PAID BY', COL1_END + 20, finalY + 115, { align: 'center', width: 190 });
+
+  doc.text('Consignor', COL1_END + 55, finalY + 130);
+  doc.rect(COL1_END + 45, finalY + 130, 7, 7).stroke(); // Checkbox 1
+
+  doc.text('Consignee', COL1_END + 150, finalY + 130);
+  doc.rect(COL1_END + 140, finalY + 130, 7, 7).stroke(); // Checkbox 2
+
+
+
+  doc.end();
   } catch (err) {
     console.error(err);
     res.status(500).send("Error generating PDF");
-  } finally {
-    // 2. GUARANTEED CLOSURE: Close the browser instance
-    if (browser) {
-      await browser.close();
-      console.log("Puppeteer browser closed successfully.");
-    }
   }
 });
 

@@ -44,25 +44,54 @@ const BiltyForm = () => {
 
   const generatePdf = async () => {
     setLoading(true);
-    const response = await fetch(
-      "https://bhandal-roadways-doc-maker.onrender.com/generate-pdf",
-      {
+    try {
+      const response = await fetch("http://localhost:5000/generate-pdf", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ biltyData }),
-      }
-    );
+      });
 
-    if (response.ok) {
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
+      }
+
+      // 1. Get the response data as a Blob (binary data)
       const blob = await response.blob();
+
+      // 2. Create a temporary URL for the Blob
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "bilty.pdf";
-      link.click();
+
+      // 3. Create a temporary hidden link element
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+
+      // Use the filename from the Content-Disposition header if available, otherwise use a default
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const defaultFilename = "bilty.pdf";
+
+      let filename = defaultFilename;
+      if (contentDisposition) {
+        const matches = /filename="([^"]+)"/.exec(contentDisposition);
+        if (matches && matches[1]) {
+          filename = matches[1];
+        }
+      }
+
+      a.download = filename; // Set the filename
+
+      // 4. Trigger the download and clean up
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error during PDF generation or download:", error);
+      alert("Failed to download the PDF. Please try again.");
+    } finally {
       setLoading(false);
-    } else {
-      alert("PDF generation failed");
     }
   };
 
@@ -88,7 +117,7 @@ const BiltyForm = () => {
     >
       <button
         type="button"
-        onClick={()=>navigate("/")}
+        onClick={() => navigate("/")}
         className="absolute left-0 top-5 flex items-center gap-2.5  px-4 py-2 text-sm text-gray-800 rounded bg-white hover:text-pink-500/70 hover:bg-pink-500/10 hover:border-pink-500/30 active:scale-95 transition"
       >
         <svg
