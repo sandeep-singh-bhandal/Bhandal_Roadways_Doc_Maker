@@ -29,7 +29,6 @@ app.get("/status", (req, res) => {
 app.post("/generate-pdf", async (req, res) => {
   const { biltyData } = req.body;
   try {
-    // 💡 FIX 1: Assign mockBiltyData to the 'data' variable used throughout the logic.
     const data = biltyData;
 
     // 💡 FIX 2: Define 'date' and 'totalWeight' variables, which were missing.
@@ -89,12 +88,24 @@ app.post("/generate-pdf", async (req, res) => {
         align: 'center'
       });
 
+    const PHONE_ICON_SIZE = 14;
+    const PHONE_ICON = path.join(PUBLIC_ROOT, 'phone.png');
+    try {
+      doc.image(PHONE_ICON, MARGIN_X + 450, currentY - 4, {
+        width: PHONE_ICON_SIZE,
+        height: PHONE_ICON_SIZE,
+      });
+    } catch (e) {
+      // Draw a placeholder box if logo is missing
+      doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
+    }
+
     // Contact Numbers (Right Side)
     doc.font('Helvetica-Bold')
       .fontSize(10)
       .text('+91 93016 76383', PAGE_WIDTH - 60, currentY, { align: 'right' });
     doc.text('+91 94060 21740', PAGE_WIDTH - 60, currentY + 12, { align: 'right' });
-    doc.text('+91 79744 79917', PAGE_WIDTH - 60, currentY + 24, { align: 'right' });
+    doc.text('+91 62612 94248', PAGE_WIDTH - 60, currentY + 24, { align: 'right' });
 
     // Sub-Title and Address
     currentY += 45;
@@ -105,10 +116,6 @@ app.post("/generate-pdf", async (req, res) => {
     const paddingY = 3; // Vertical padding
     const lineHeight = fontSize * 1.2; // Approximate line height
 
-    // Since align: 'center' is used, we need to calculate the actual width of the text *without* alignment.
-    // PDFKit doesn't easily expose rendered text width for center alignment, so we rely on the defined area (PAGE_WIDTH).
-
-    // The bounding box will cover the entire PAGE_WIDTH minus margins
     const boxX = MARGIN_X + 90;
     const boxY = currentY - paddingY + 3; // Shift up by paddingY
     const boxWidth = PAGE_WIDTH - 180;
@@ -134,12 +141,34 @@ app.post("/generate-pdf", async (req, res) => {
     doc.fillColor('black');
 
 
+    const LOCATION_ICON_SIZE = 15;
+    const LOCATION_ICON = path.join(PUBLIC_ROOT, 'location.png');
+    try {
+      doc.image(LOCATION_ICON, MARGIN_X + 85, currentY + 6, {
+        width: LOCATION_ICON_SIZE,
+        height: LOCATION_ICON_SIZE,
+      });
+    } catch (e) {
+      // Draw a placeholder box if logo is missing
+      doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
+    }
     currentY += 10;
     doc
       .fontSize(10)
       .text('House No: 21, Harshit Vihar, Phase 05, Tatibandh, RAIPUR: 492099 (C.G)', MARGIN_X, currentY, { align: 'center' });
 
     currentY += 16;
+    const MAIL_ICON_SIZE = 14;
+    const MAIL_ICON = path.join(PUBLIC_ROOT, 'mail.png');
+    try {
+      doc.image(MAIL_ICON, MARGIN_X + 185, currentY - 4, {
+        width: MAIL_ICON_SIZE,
+        height: MAIL_ICON_SIZE,
+      });
+    } catch (e) {
+      // Draw a placeholder box if logo is missing
+      doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
+    }
     doc
       .fontSize(10)
       .text('bhandalroadways@gmail.com', MARGIN_X, currentY, { align: 'center' });
