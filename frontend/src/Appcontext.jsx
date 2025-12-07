@@ -10,6 +10,7 @@ export const AppContextProvider = ({ children }) => {
     truckNo: "",
     from: "",
     to: "",
+    typeOfBilty: "",
     consignor: { name: "", address: "", gstNumber: "" },
     consignee: { name: "", address: "", gstNumber: "" },
     packages: [],

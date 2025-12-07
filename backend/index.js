@@ -153,7 +153,7 @@ app.post("/generate-pdf", async (req, res) => {
     doc.font('Helvetica-Bold')
       .fontSize(12)
       .fillColor('red')
-      .text(`Driver Copy`, MARGIN_X - 15, currentY, { align: 'center' });
+      .text(data.typeOfBilty, MARGIN_X - 15, currentY, { align: 'center' });
 
     currentY += 20;
 
