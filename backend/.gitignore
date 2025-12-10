@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 
+preview.html
+
 # Ignore the local cache directory created by Puppeteer or other tools
 .cache/
 
