@@ -28,6 +28,17 @@ app.get("/status", (req, res) => {
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
   const { biltyData } = req.body;
+  // const mockBiltyData = {
+  //   lrNo: "77", truckNo: "CG04QA4780", from: "Raipur, Chhattisgarh", to: "Kadodara, Gujarat",
+  //   consignor: { name: "SATYAM STEEL", address: "BLOCK-146/C, TANTITHAIYA, KADODARA, BARDOLI ROAD SURAT SUNNY SUNNY SUNNY SUNNY SUNNY Sunny", gstNumber: "22AEGFS8130R1ZK" },
+  //   consignee: { name: "STARK INDUSTRIES INDIA", address: "BLOCK-146/C, TANTITHAIYA, KADODARA, BARDOLI ROAD SURAT SU", gstNumber: "24BBCPA6477M1ZI" },
+  //   packages: [
+  //     { description: "SATYAM STEEL", weight: "16.560", rate: "Fix", freight: "To Pay" },
+  //     { description: "MS STRIPS (72111950)", weight: "17.760", rate: "Fix", freight: "To Pay" },
+  //     { description: "RAIPH 49111", weight: "", rate: "", freight: "" }, // Empty row example
+  //   ],
+  //   eWayBillNo: "8916722901094", invoiceNo: "SS/25-26/1098", includeDigitalStamp: true,
+  // };
   try {
     const data = biltyData;
 
@@ -239,7 +250,11 @@ app.post("/generate-pdf", async (req, res) => {
 
     // --- 4. CONSIGNOR / CONSIGNEE BOX ---
 
-    const consigY = currentY;
+    const consigY = (data.consignor.address.length > 86 || data.consignee.address.length > 86)
+      ? currentY + 20
+      : (data.consignor.address.length > 57 || data.consignee.address.length > 57)
+      ? currentY + 10
+      : currentY;
     const consigHeight = 70;
 
 
@@ -247,23 +262,21 @@ app.post("/generate-pdf", async (req, res) => {
     let consigX = MARGIN_X + 5;
     doc.font('Helvetica').fontSize(10);
 
-    doc.text('Consignor:', consigX, consigY + 5);
-    doc.font('Helvetica-Bold').text(data.consignor.name, consigX + 51, consigY + 5);
+    doc.text('Consignor:', consigX, currentY + 5);
+    doc.font('Helvetica-Bold').text(data.consignor.name, consigX + 51, currentY + 5);
 
-    doc.font('Helvetica').text('Address:', consigX, consigY + 23);
-    doc.font('Helvetica-Bold').text(data.consignor.address, consigX + 41, consigY + 23, { width: PAGE_WIDTH / 2 - 70 });
-
+    doc.font('Helvetica').text('Address:', consigX, currentY + 23);
+    doc.font('Helvetica-Bold').text(data.consignor.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70 });
     doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
     doc.font('Helvetica-Bold').text(data.consignor.gstNumber, consigX + 41, consigY + 52);
 
     // Right (Consignee)
     consigX = MARGIN_X + PAGE_WIDTH / 2 + 5;
 
-    doc.font('Helvetica').text('Consignee:', consigX, consigY + 5);
-    doc.font('Helvetica-Bold').text(data.consignee.name, consigX + 51, consigY + 5);
-
-    doc.font('Helvetica').text('Address:', consigX, consigY + 23);
-    doc.font('Helvetica-Bold').text(data.consignee.address, consigX + 41, consigY + 23, { width: PAGE_WIDTH / 2 - 70 });
+    doc.font('Helvetica').text('Consignee:', consigX, currentY + 5);
+    doc.font('Helvetica-Bold').text(data.consignee.name, consigX + 51, currentY + 5);
+    doc.font('Helvetica').text('Address:', consigX, currentY + 23);
+    doc.font('Helvetica-Bold').text(data.consignee.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70 });
 
     doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
     doc.font('Helvetica-Bold').text(data.consignee.gstNumber, consigX + 41, consigY + 52);
