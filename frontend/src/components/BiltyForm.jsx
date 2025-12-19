@@ -149,7 +149,7 @@ const BiltyForm = () => {
       <h1 className="text-4xl font-bold py-4 text-center">Bilty Maker</h1>
       <div className="max-w-96 w-full px-4">
         {[
-          { label: "Lr No", name: "lrNo", type: "number" },
+          { label: "Lr No", name: "lrNo", type: "text" },
           { label: "Invoice No.", name: "invoiceNo", type: "text" },
           { label: "E way bill No", name: "eWayBillNo", type: "number" },
           { label: "Truck No", name: "truckNo", type: "text" },
