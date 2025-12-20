@@ -53,7 +53,7 @@ const BiltyForm = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:5000/generate-pdf",
+        "https://bhandal-roadways-doc-maker.onrender.com/generate-pdf",
         {
           method: "POST",
           headers: {

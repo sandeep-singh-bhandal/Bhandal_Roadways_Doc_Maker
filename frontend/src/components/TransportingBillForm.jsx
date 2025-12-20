@@ -45,7 +45,7 @@ const BiltyForm = () => {
   const generatePdf = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/generate-bill-pdf", {
+      const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-bill-pdf", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
