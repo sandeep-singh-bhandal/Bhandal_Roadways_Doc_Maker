@@ -1,10 +1,13 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 import PDFDocument from "pdfkit";
+import { drawBiltyPage } from "./drawBilty.js";
 
 const app = express();
+
 
 // Middleware
 app.use(bodyParser.json({ limit: "10mb" }));
@@ -43,9 +46,84 @@ app.post("/generate-pdf", async (req, res) => {
     const data = biltyData;
 
     // 💡 FIX 2: Define 'date' and 'totalWeight' variables, which were missing.
-    const date = new Date().toLocaleDateString("en-GB");
-    const totalWeight = data.packages.reduce((acc, item) => acc + (Number(item.weight) || 0), 0).toFixed(3);
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 20
+    });
+    const PUBLIC_ROOT = path.join(process.cwd(), 'public');
+    const fontPath = path.join(PUBLIC_ROOT, 'impact.ttf');
+    if (fs.existsSync(fontPath)) { doc.registerFont('Impact', fontPath); }
 
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="bilty-preview.pdf"`);
+
+    doc.pipe(res);
+    drawBiltyPage(doc, data, "Driver Copy")
+    doc.addPage()
+    drawBiltyPage(doc, data, "Consignee Copy")
+
+
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error generating PDF");
+  }
+});
+
+// generate bill pdf route
+app.post("/generate-bill-pdf", async (req, res) => {
+  const { billData } = req.body;
+  try {
+
+    // const BillDataMock = {
+    //   // --- General Bill Information ---
+    //   billNo: "56",
+    //   receipientName: "Siddharth Trading Corp.",
+    //   receipientAddress: "3rd Cross, Industrial Area, Pune, Maharashtra - 411003 3rd Cross, Industrial Area, Pune, Maharashtraa",
+    //   through: "Hindustan Roadlines",
+    //   vehicleNo: "MH-12-DE-5678",
+    //   from: "Delhi (NCR)",
+    //   to: "Pune (Maharashtra)",
+    //   includeDigitalStamp: true,
+
+    //   // --- Financial Summary ---
+    //   billDetails: {
+    //     // Total Freight from all LRs: (59500 + 44000) = 103500.00
+    //     halting: "2000", // Charge for waiting/delay
+    //     extra: "1500", // Miscellaneous charges (e.g., labour)
+    //     total: "107000", // (103500 + 2000 + 1500)
+    //     advance: "40000",
+    //     balance: "67000", // (107000 - 40000)
+    //   },
+
+    //   // --- Lorry Receipts (LRs) Detail Array ---
+    //   lrs: [
+    //     {
+    //       lrNo: "71",
+    //       date: "2025-12-10",
+    //       invoiceNo: "INV-BTL-9876",
+    //       weight: "15.120",
+    //       chargeWeight: "Same", // Using 'Same' as specified
+    //       rate: "2500", // Rate per unit of chargeWeight (per Kg)
+    //       freight: "54600", // Calculated: 7000 * 8.50
+    //     },
+    //     {
+    //       lrNo: "72",
+    //       date: "2025-12-10",
+    //       invoiceNo: "INV-XYZ-1201",
+    //       weight: "25.110",
+    //       chargeWeight: "Same", // Using a different charge weight for variety
+    //       rate: "2350", // Rate per unit of chargeWeight (per Kg)
+    //       freight: "44000", // Calculated: 5000 * 8.80
+    //     },
+    //     {}, {}, {}
+    //   ],
+    // };
+    const data = billData;
+
+    // 💡 FIX 2: Define 'date' and 'totalWeight' variables, which were missing.
+    const date = new Date().toLocaleDateString("en-GB");
 
     const doc = new PDFDocument({
       size: 'A4',
@@ -53,7 +131,7 @@ app.post("/generate-pdf", async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="bilty-preview.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="bill.pdf"`);
 
     doc.pipe(res);
 
@@ -69,13 +147,15 @@ app.post("/generate-pdf", async (req, res) => {
       console.warn("Custom font not found");
     }
 
+    doc.rect(MARGIN_X, currentY - 6, PAGE_WIDTH, data.receipientAddress.length > 100 ? 710 : 690).stroke();
+
     // --- 2. TOP HEADER (LOGO, TITLE, CONTACTS) ---
 
     // Logo (Approximate Positioning)
     const LOGO_SIZE = 80;
     const LOGO_PATH = path.join(PUBLIC_ROOT, 'logo.png');
     try {
-      doc.image(LOGO_PATH, MARGIN_X, currentY, {
+      doc.image(LOGO_PATH, MARGIN_X + 10, currentY + 5, {
         width: LOGO_SIZE,
         height: LOGO_SIZE,
       });
@@ -83,14 +163,6 @@ app.post("/generate-pdf", async (req, res) => {
       // Draw a placeholder box if logo is missing
       doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
     }
-
-    doc
-      .fontSize(10)
-      .text('Subject to Raipur Jurisdiction', MARGIN_X + 80, currentY - 7, {
-        width: PAGE_WIDTH - 160,
-        align: 'center',
-
-      });
     // Title
     doc.font('Impact')
       .fontSize(36)
@@ -102,7 +174,7 @@ app.post("/generate-pdf", async (req, res) => {
     const PHONE_ICON_SIZE = 14;
     const PHONE_ICON = path.join(PUBLIC_ROOT, 'phone.png');
     try {
-      doc.image(PHONE_ICON, MARGIN_X + 450, currentY - 4, {
+      doc.image(PHONE_ICON, MARGIN_X + 435, currentY + 11, {
         width: PHONE_ICON_SIZE,
         height: PHONE_ICON_SIZE,
       });
@@ -114,9 +186,9 @@ app.post("/generate-pdf", async (req, res) => {
     // Contact Numbers (Right Side)
     doc.font('Helvetica-Bold')
       .fontSize(10)
-      .text('+91 93016 76383', PAGE_WIDTH - 60, currentY, { align: 'right' });
-    doc.text('+91 94060 21740', PAGE_WIDTH - 60, currentY + 12, { align: 'right' });
-    doc.text('+91 62612 94248', PAGE_WIDTH - 60, currentY + 24, { align: 'right' });
+      .text('+91 93016 76383', PAGE_WIDTH - 55, currentY + 14, { align: 'left' });
+    doc.text('+91 94060 21740', PAGE_WIDTH - 55, currentY + 26, { align: 'left' });
+    doc.text('+91 62612 94248', PAGE_WIDTH - 55, currentY + 38, { align: 'left' });
 
     // Sub-Title and Address
     currentY += 45;
@@ -127,9 +199,9 @@ app.post("/generate-pdf", async (req, res) => {
     const paddingY = 3; // Vertical padding
     const lineHeight = fontSize * 1.2; // Approximate line height
 
-    const boxX = MARGIN_X + 90;
+    const boxX = MARGIN_X + 110;
     const boxY = currentY - paddingY + 3; // Shift up by paddingY
-    const boxWidth = PAGE_WIDTH - 180;
+    const boxWidth = PAGE_WIDTH - 220;
     const boxHeight = lineHeight + (2 * paddingY);
 
     // 2. Draw the Black Background Box
@@ -155,7 +227,7 @@ app.post("/generate-pdf", async (req, res) => {
     const LOCATION_ICON_SIZE = 15;
     const LOCATION_ICON = path.join(PUBLIC_ROOT, 'location.png');
     try {
-      doc.image(LOCATION_ICON, MARGIN_X + 85, currentY + 6, {
+      doc.image(LOCATION_ICON, MARGIN_X + 85, currentY + 5, {
         width: LOCATION_ICON_SIZE,
         height: LOCATION_ICON_SIZE,
       });
@@ -182,7 +254,7 @@ app.post("/generate-pdf", async (req, res) => {
     }
     doc
       .fontSize(10)
-      .text('bhandalroadways@gmail.com', MARGIN_X, currentY, { align: 'center' });
+      .text('bhandalroadways@gmail.com', MARGIN_X, currentY - 1, { align: 'center' });
 
     currentY += 15;
     doc.font('Helvetica-Bold')
@@ -191,111 +263,102 @@ app.post("/generate-pdf", async (req, res) => {
 
     currentY += 20;
     doc.font('Helvetica-Bold')
-      .fontSize(12)
+      .fontSize(15)
       .fillColor('red')
-      .text(data.typeOfBilty, MARGIN_X - 15, currentY, { align: 'center' });
+      .text("TRANSPORTING BILL", MARGIN_X - 15, currentY + 2, { align: 'center' });
 
-    currentY += 20;
+    doc.moveTo(MARGIN_X, 190).lineTo(PAGE_WIDTH + 30, 190).stroke();
+
+    currentY += 40;
 
     // --- 3. LR & DATE / FROM & TO BOX ---
 
-    const box1Y = currentY;
+    const box1Y = currentY + 8;
     const box1Height = 50;
 
     // Draw main box border
 
     // LR No. (Top Left)
     doc.font('Helvetica-Bold')
-      .fontSize(10)
+      .fontSize(11)
       .fillColor('black')
-      .text('L.R No:', MARGIN_X + 5, box1Y + 5);
+      .text('No:', MARGIN_X + 5, box1Y);
 
     doc.font('Helvetica-Bold')
       .fontSize(14)
       .fillColor('red')
-      .text(data.lrNo, MARGIN_X + 42, box1Y + 1);
+      .text(data.billNo, MARGIN_X + 25, box1Y - 2);
 
     // Date (Top Right)
     doc.font('Helvetica-Bold')
-      .fontSize(10)
+      .fontSize(12)
       .fillColor('black')
-      .text('Date:', MARGIN_X + 60 + PAGE_WIDTH - 150, box1Y + 5);
+      .text('Date:', MARGIN_X + 60 + PAGE_WIDTH - 150, box1Y);
     doc.font('Helvetica-Bold')
-      .text(date, MARGIN_X + 60 + PAGE_WIDTH - 120, box1Y + 5);
-
-    // Truck No, From, To
-    doc.font('Helvetica-Bold')
-      .fontSize(9);
-
-    doc.rect(MARGIN_X, currentY + 22, PAGE_WIDTH, 17).stroke();
-
-    // Truck No
-    let truckX = MARGIN_X + 5;
-    doc.text('Truck No:', truckX, box1Y + 27);
-    doc.text(data.truckNo, truckX + 44, box1Y + 27);
-    doc.moveTo(MARGIN_X + 170, box1Y + 39).lineTo(MARGIN_X + 170, box1Y + 22).stroke();
-
-    // From
-    let fromX = MARGIN_X + 175;
-    doc.text('From:', fromX, box1Y + 27);
-    doc.text(data.from, fromX + 27, box1Y + 27, { width: 140 });
-    doc.moveTo(MARGIN_X + 370, box1Y + 39).lineTo(MARGIN_X + 370, box1Y + 22).stroke();
+      .text(date, MARGIN_X + 60 + PAGE_WIDTH - 120, box1Y);
 
     // To
-    let toX = MARGIN_X + 375;
-    doc.text('To:', toX, box1Y + 27);
-    doc.text(data.to, toX + 16, box1Y + 27, { width: 180 });
+    let receipientX = MARGIN_X + 5;
+    doc.text('To:', receipientX, box1Y + 23);
+    doc.text(data.receipientName, receipientX + 20, box1Y + 23);
+    doc.text(data.receipientAddress, receipientX, box1Y + 43, { width: PAGE_WIDTH - 5 });
 
-    currentY = box1Y + box1Height;
+    currentY = box1Y + box1Height + (data.receipientAddress.length > 100 ? 40 : 20);
+    doc.moveTo(MARGIN_X, currentY - 10).lineTo(PAGE_WIDTH + 30, currentY - 10).stroke();
+    doc.moveTo((PAGE_WIDTH + 60) / 2, currentY - 10).lineTo((PAGE_WIDTH + 60) / 2, currentY + box1Height + 30).stroke();
 
     // --- 4. CONSIGNOR / CONSIGNEE BOX ---
 
-    const consigY = (data.consignor.address.length > 86 || data.consignee.address.length > 86)
-      ? currentY + 20
-      : (data.consignor.address.length > 57 || data.consignee.address.length > 57)
-      ? currentY + 10
-      : currentY;
-    const consigHeight = 70;
+    const consigY = currentY
+    // (data.consignor.address.length > 86 || data.consignee.address.length > 86)
+    //   ? currentY + 20
+    //   : (data.consignor.address.length > 57 || data.consignee.address.length > 57)
+    //     ? currentY + 10
+    //     : currentY;
+    const consigHeight = 50;
 
 
     // Left (Consignor)
     let consigX = MARGIN_X + 5;
-    doc.font('Helvetica').fontSize(10);
+    doc.font('Helvetica-Bold').fontSize(12);
 
-    doc.text('Consignor:', consigX, currentY + 5);
-    doc.font('Helvetica-Bold').text(data.consignor.name, consigX + 51, currentY + 5);
+    doc.text('Vehicle No:', consigX, currentY + 8);
+    doc.font('Helvetica-Bold').text(data.vehicleNo, consigX + 66, currentY + 8);
 
-    doc.font('Helvetica').text('Address:', consigX, currentY + 23);
-    doc.font('Helvetica-Bold').text(data.consignor.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70 });
-    doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
-    doc.font('Helvetica-Bold').text(data.consignor.gstNumber, consigX + 41, consigY + 52);
+    doc.font('Helvetica-Bold').text('Through:', consigX, currentY + 32);
+    doc.text(data.through, consigX + 54, currentY + 32, { width: PAGE_WIDTH / 2 - 70 });
 
     // Right (Consignee)
     consigX = MARGIN_X + PAGE_WIDTH / 2 + 5;
 
-    doc.font('Helvetica').text('Consignee:', consigX, currentY + 5);
-    doc.font('Helvetica-Bold').text(data.consignee.name, consigX + 51, currentY + 5);
-    doc.font('Helvetica').text('Address:', consigX, currentY + 23);
-    doc.font('Helvetica-Bold').text(data.consignee.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70 });
+    doc.font('Helvetica-Bold').fontSize(12);
 
-    doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
-    doc.font('Helvetica-Bold').text(data.consignee.gstNumber, consigX + 41, consigY + 52);
+    doc.text('From:', consigX, currentY + 8);
+    doc.font('Helvetica-Bold').text(data.from, consigX + 34, currentY + 8);
+
+    doc.font('Helvetica-Bold').text('To:', consigX, currentY + 32);
+    doc.text(data.to, consigX + 20, currentY + 32, { width: PAGE_WIDTH / 2 - 70 });
 
     currentY = consigY + consigHeight;
 
     // --- 5. PACKAGE DATA TABLE ---
     const tableY = currentY + 10;
-    const rowHeight = 18;
-    const headerHeight = 20;
+    const rowHeight = 30;
+    const headerHeight = 30;
 
     // Define column layout (Total width = 535)
     const tableColumns = [
-      { name: "S. No.", width: 45, align: 'center', field: 'index' },
-      { name: "Description of Load", width: 230, align: 'center', field: 'description' },
-      { name: "Quantity", width: 90, align: 'center', field: 'weight' },
-      { name: "Rate", width: 85, align: 'center', field: 'rate' },
-      { name: "FREIGHT", width: 85, align: 'center', field: 'freight' }
+      { name: "LR No.", width: 60, align: 'center', field: 'lrNo' },
+      { name: "Date", width: 80, align: 'center', field: 'date' },
+      { name: "Invoice No.", width: 100, align: 'center', field: 'invoiceNo' },
+      { name: "Weight", width: 75, align: 'center', field: 'weight' },
+      { name: "Charge Wt.", width: 75, align: 'center', field: 'chargeWeight' },
+      { name: "Rate", width: 70, align: 'center', field: 'rate' },
+      { name: "FREIGHT", width: 75, align: 'center', field: 'freight' }
     ];
+    const RUPEE_ICON_SIZE = 12;
+    const RUPEE_ICON = path.join(PUBLIC_ROOT, 'rupee.png');
+    const RUPEE_ICON_RED = path.join(PUBLIC_ROOT, 'rupee-red.png');
 
     // Calculate starting X coordinates for columns
     let columnStart = MARGIN_X;
@@ -305,12 +368,12 @@ app.post("/generate-pdf", async (req, res) => {
     });
 
     // --- DRAW TABLE HEADERS ---
-    doc.font('Helvetica-Bold').fontSize(9);
+    doc.font('Helvetica-Bold').fontSize(12);
     doc.rect(MARGIN_X, tableY, PAGE_WIDTH, headerHeight).fillAndStroke('#f0f0f0', 'black');
 
     tableColumns.forEach(col => {
       doc.fillColor('black')
-        .text(col.name, col.x, tableY + 6, { width: col.width, align: col.align });
+        .text(col.name, col.x, tableY + 10, { width: col.width, align: col.align });
     });
 
     // Draw vertical column separators
@@ -323,32 +386,44 @@ app.post("/generate-pdf", async (req, res) => {
     });
 
     let dataY = tableY + headerHeight;
-    const dataRows = data.packages // Take up to 3 for the main view
+    const dataRows = data.lrs
 
     for (let i = 0; i < dataRows.length; i++) {
       const rowData = dataRows[i];
 
-      // Draw Row Border
       doc.rect(MARGIN_X, dataY, PAGE_WIDTH, rowHeight).stroke('black');
-
-      doc.font('Helvetica-Bold').fontSize(9);
+      doc.font('Helvetica-Bold').fontSize(12);
 
       tableColumns.forEach((col, colIndex) => {
-        let textValue = '';
+        let textValue = rowData[col.field] || '';
 
-        if (col.field === 'index') {
-          textValue = `${i + 1}.`;
-        } else if (rowData) {
-          textValue = rowData[col.field];
-          if (col.field === 'weight' && textValue) textValue += ' MT';
+        if (col.field === 'weight' && textValue) {
+          textValue += ' MT';
         }
 
-        doc.fillColor('black')
-          .text(textValue, col.x + 2, dataY + 5, { width: col.width - 4, align: col.align });
+        doc.fillColor('black');
 
-        // Draw inner vertical line
+        if ((col.field === 'rate' || col.field === 'freight') && textValue) {
+          doc.image(RUPEE_ICON, col.x + 15, dataY + 10, {
+            width: RUPEE_ICON_SIZE,
+            height: RUPEE_ICON_SIZE,
+          });
+
+          doc.text(textValue, col.x+15, dataY + 11, {
+            width: col.width - (RUPEE_ICON_SIZE + 6),
+            align: col.align
+          });
+        } else {
+          doc.text(textValue, col.x + 2, dataY + 11, {
+            width: col.width - 4,
+            align: col.align
+          });
+        }
+
         if (colIndex < tableColumns.length - 1) {
-          doc.moveTo(col.x + col.width, dataY).lineTo(col.x + col.width, dataY + rowHeight).stroke('black');
+          doc.moveTo(col.x + col.width, dataY)
+            .lineTo(col.x + col.width, dataY + rowHeight)
+            .stroke('black');
         }
       });
 
@@ -357,106 +432,93 @@ app.post("/generate-pdf", async (req, res) => {
 
     currentY = dataY;
 
-    // --- 6. TOTAL ROW ---
-    const totalY = currentY;
-    const totalRowHeight = 20;
-
-    doc.rect(MARGIN_X, totalY, PAGE_WIDTH, totalRowHeight).stroke('black'); // Full border
-
-    // Total Weight Cell
-    const totalWeightX = tableColumns[2].x;
-    const totalWeightWidth = tableColumns[2].width;
-
-    doc.font('Helvetica-Bold').fontSize(10);
-    doc.text(`Total: ${totalWeight} MT`, totalWeightX, totalY + 6, { width: totalWeightWidth, align: 'center' });
-
-    // Draw vertical separators for other columns
-    doc.moveTo(tableColumns[1].x, totalY).lineTo(tableColumns[1].x, totalY + totalRowHeight).stroke('black');
-    doc.moveTo(tableColumns[2].x + totalWeightWidth, totalY).lineTo(tableColumns[2].x + totalWeightWidth, totalY + totalRowHeight).stroke('black');
-    doc.moveTo(tableColumns[3].x + tableColumns[3].width, totalY).lineTo(tableColumns[3].x + tableColumns[3].width, totalY + totalRowHeight).stroke('black');
-
-
-    currentY = totalY + totalRowHeight;
-
     // --- 7. FINAL BOTTOM SECTION ---
 
     const finalY = currentY;
-    const finalHeight = 30;
+    const finalHeight = 125;
 
     doc.rect(MARGIN_X, finalY, PAGE_WIDTH, finalHeight + 5).stroke('black');
-    doc.rect(MARGIN_X, finalY + 35, PAGE_WIDTH, finalHeight * 2).stroke('black');
-    doc.rect(MARGIN_X, finalY + 95, PAGE_WIDTH, finalHeight * 2.5).stroke('black');
-
     // Draw major internal separators
-    const COL1_END = MARGIN_X + 140; // Invoice/eWayBill
-    const COL2_END = COL1_END + 135; // Terms and Conditions
-    const COL3_END = COL2_END + 90; // Balance / To Pay
-    const COL4_END = COL3_END + 85; // Balance / To Pay
+    const COL1_END = MARGIN_X + 390; // Invoice/eWayBill
 
-    doc.moveTo(COL1_END, finalY).lineTo(COL1_END, finalY + finalHeight + 140).stroke('black');
-    doc.moveTo(COL2_END, finalY).lineTo(COL2_END, finalY + finalHeight + 65).stroke('black');
-    doc.moveTo(COL3_END, finalY).lineTo(COL3_END, finalY + finalHeight + 5).stroke('black');
-    doc.moveTo(COL4_END, finalY).lineTo(COL4_END, finalY + finalHeight + 65).stroke('black');
-    doc.moveTo(COL3_END, finalY + finalHeight + 65).lineTo(COL3_END, finalY + finalHeight + 140).stroke('black');
+    // vertical lines
+    doc.moveTo(COL1_END, finalY).lineTo(COL1_END, finalY + finalHeight + 5).stroke('black');
+    doc.moveTo(COL1_END + 70, finalY).lineTo(COL1_END + 70, finalY + 130).stroke('black');
+
+    doc.moveTo(COL1_END, finalY + 25).lineTo(PAGE_WIDTH + 30, finalY + 25).stroke('black');
+    doc.moveTo(MARGIN_X, finalY + 50).lineTo(PAGE_WIDTH + 30, finalY + 50).stroke('black');
+    doc.moveTo(COL1_END, finalY + 75).lineTo(PAGE_WIDTH + 30, finalY + 75).stroke('black');
+    doc.moveTo(COL1_END, finalY + 100).lineTo(PAGE_WIDTH + 30, finalY + 100).stroke('black');
 
     // Col 1: E-Way/Invoice/Bank Details
-    doc.font('Helvetica-Bold').fontSize(10);
-    doc.text(`e-Way Bill: ${data.eWayBillNo}`, MARGIN_X + 5, finalY + 16);
-    doc.text(`Invoice No: ${data.invoiceNo}`, MARGIN_X + 5, finalY + 50);
-    doc.text(`Value: AS PER INVOICE`, MARGIN_X + 5, finalY + 70);
+    try {
+      doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 7, {
+        width: RUPEE_ICON_SIZE,
+        height: RUPEE_ICON_SIZE,
+      });
+      doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 30, {
+        width: RUPEE_ICON_SIZE,
+        height: RUPEE_ICON_SIZE,
+      });
+      doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 56, {
+        width: RUPEE_ICON_SIZE,
+        height: RUPEE_ICON_SIZE,
+      });
+      doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 81, {
+        width: RUPEE_ICON_SIZE,
+        height: RUPEE_ICON_SIZE,
+      });
+      doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 109, {
+        width: RUPEE_ICON_SIZE,
+        height: RUPEE_ICON_SIZE,
+      });
+    } catch (e) {
+      // Draw a placeholder box if logo is missing
+      doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
+    }
+    doc.font('Helvetica-Bold').fontSize(11);
+    doc.text(`Note ${data.note1}`, MARGIN_X + 5, finalY + 22);
+    doc.text(`Halting`, COL1_END + 15, finalY + 9);
+    doc.text(`${data.billDetails.halting}`, COL1_END + 95, finalY + 9);
+    doc.text(`Extra`, COL1_END + 15, finalY + 32);
+    doc.text(`${data.billDetails.extra}`, COL1_END + 95, finalY + 32);
+    doc.text(`Total `, COL1_END + 15, finalY + 58);
+    doc.fillColor("red").text(`${data.billDetails.total}`, COL1_END + 95, finalY + 58).fillColor("black");
+    doc.text(`Advance `, COL1_END + 15, finalY + 83);
+    doc.text(`${data.billDetails.advance}`, COL1_END + 95, finalY + 83);
+    doc.text(`Balance `, COL1_END + 15, finalY + 111)
+    doc.fillColor("red").text(`${data.billDetails.balance}`, COL1_END + 95, finalY + 111).fillColor("black")
 
-    doc.text(`HDFC A/C: 50200098240792`, MARGIN_X + 5, finalY + 120);
-    doc.text(`IFSC CODE: HDFC0003692`, MARGIN_X + 5, finalY + 140);
+    doc.text(`Note: ${data.note2}`, MARGIN_X + 5, finalY + 90);
 
     // Col 2: Terms and Conditions
-    doc.fontSize(8);
-    const terms = [
-      "• The Goods are accepted for carrier subject to terms and condition overleaf.",
-      "• We are only broker not responsible for any type of claim (i.e. theft, damage, shortage, leakage, brokerage etc)."
-    ];
-    let termsY = finalY + 5;
-    terms.forEach(term => {
-      doc.text(term, COL1_END + 5, termsY, { width: 125 });
-      termsY += 36
-    });
+    doc.fontSize(11);
+    doc.text(`HDFC A/C:  50200098240792 `, MARGIN_X + 5, finalY + finalHeight + 20);
+    doc.text(`IFSC CODE: HDFC0003692 `, MARGIN_X + 5, finalY + finalHeight + 40);
+    doc.text(`PAN No:      AHSPB6197L `, MARGIN_X + 5, finalY + finalHeight + 60);
+    doc.moveTo(COL1_END - 80, finalY + finalHeight + 5).lineTo(COL1_END - 80, finalY + finalHeight + 80).stroke('black');
+    doc.moveTo(MARGIN_X, finalY + finalHeight + 80).lineTo(PAGE_WIDTH + 30, finalY + finalHeight + 80).stroke('black');
 
     // Col 3/4: Balance / To Pay / Stamp
-
-    // Top Right (Balance)
-    doc.font('Helvetica-Bold').fontSize(9).text('BALANCE', COL3_END, finalY + 13, { width: 90, align: 'center' });
-    doc.text('AS PER DECIDED RATE', COL4_END, finalY + 10, { width: 90, align: 'center' });
-
-    // Middle Right (To Pay)
-    doc.fontSize(16)
-    doc.text('TO PAY TOTAL', COL2_END + 5, finalY + finalHeight / 2 + 45, { width: 160, align: 'center' });
 
     // Digital Stamp Area
     if (data.includeDigitalStamp) {
       const STAMP_PATH = path.join(PUBLIC_ROOT, 'stamp.jpg');
       try {
         // Replace with your actual stamp path
-        doc.image(STAMP_PATH, COL3_END + 70, finalY + 100, { width: 50, height: 50 });
+        doc.image(STAMP_PATH, COL1_END + 70, finalY + finalHeight + 10, { width: 50, height: 50 });
       } catch (e) {
         // Placeholder box if image is missing
-        doc.rect(COL3_END + 20, finalY + 55, 40, 40).stroke();
+        doc.rect(COL1_END + 20, finalY + 55, 40, 40).stroke();
       }
     }
 
     // For: Bhandal Roadways
     doc.font('Helvetica-Bold').fontSize(9).fillColor('black');
-    doc.text(`For, BHANDAL ROADWAYS`, COL3_END + 40, finalY + finalHeight + 127, { width: 125, align: 'right' });
+    doc.text(`For, BHANDAL ROADWAYS`, COL1_END + 15, finalY + finalHeight + 65, { width: 125, align: 'right' });
 
 
     // Col 2 Bottom: GST Tax Paid By Checkboxes (Manual Boxes)
-    doc.font('Helvetica-Bold').fontSize(10).text('GST TAX WILL BE PAID BY', COL1_END + 20, finalY + 115, { align: 'center', width: 190 });
-
-    doc.text('Consignor', COL1_END + 55, finalY + 130);
-    doc.rect(COL1_END + 45, finalY + 130, 7, 7).stroke(); // Checkbox 1
-
-    doc.text('Consignee', COL1_END + 150, finalY + 130);
-    doc.rect(COL1_END + 140, finalY + 130, 7, 7).stroke(); // Checkbox 2
-
-
 
     doc.end();
   } catch (err) {
@@ -464,6 +526,8 @@ app.post("/generate-pdf", async (req, res) => {
     res.status(500).send("Error generating PDF");
   }
 });
+
+
 
 // Start Server
 const PORT = 5000;

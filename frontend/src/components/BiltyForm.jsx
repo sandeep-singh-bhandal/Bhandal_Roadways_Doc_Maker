@@ -52,13 +52,16 @@ const BiltyForm = () => {
   const generatePdf = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ biltyData: { ...biltyData, typeOfBilty } }),
-      });
+      const response = await fetch(
+        "http://localhost:5000/generate-pdf",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ biltyData }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Server responded with status: ${response.status}`);
@@ -114,7 +117,6 @@ const BiltyForm = () => {
     }));
   }, [noOfPackages]);
 
-
   return (
     <form
       onSubmit={(e) => {
@@ -149,7 +151,7 @@ const BiltyForm = () => {
       <h1 className="text-4xl font-bold py-4 text-center">Bilty Maker</h1>
       <div className="max-w-96 w-full px-4">
         {[
-          { label: "Lr No", name: "lrNo", type: "number" },
+          { label: "Lr No", name: "lrNo", type: "text" },
           { label: "Invoice No.", name: "invoiceNo", type: "text" },
           { label: "E way bill No", name: "eWayBillNo", type: "number" },
           { label: "Truck No", name: "truckNo", type: "text" },
@@ -187,45 +189,6 @@ const BiltyForm = () => {
             Do u need Digital Stamp?
           </span>
         </label>
-        <p className="text-sm font-bold mb-2">Select Type of Bilty</p>
-        <div className="flex flex-col w-44 text-sm relative mb-4">
-          <button
-            type="button"
-            onClick={() => setIsTypeDropDownOpen(!isTypeDropDownOpen)}
-            className="w-full text-left px-4 pr-2 py-2 border rounded bg-white text-gray-800 border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none"
-          >
-            <span>{typeOfBilty}</span>
-            <svg
-              className={`w-5 h-5 inline float-right transition-transform duration-200 ${
-                isTypeDropDownOpen ? "rotate-0" : "-rotate-90"
-              }`}
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="#6B7280"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          {isTypeDropDownOpen && (
-            <ul className="w-full bg-white border border-gray-300 rounded shadow-md mt-1 py-2">
-              {biltyTypes.map((type) => (
-                <li
-                  key={type}
-                  className="px-4 py-2 hover:bg-indigo-500 hover:text-white cursor-pointer"
-                  onClick={() => handleTypeOfBiltySelect(type)}
-                >
-                  {type}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
 
       {/* Consignor and Consignee Sections */}
