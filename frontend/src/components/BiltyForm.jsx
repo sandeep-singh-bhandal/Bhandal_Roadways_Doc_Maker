@@ -5,24 +5,17 @@ import { useNavigate } from "react-router-dom";
 
 const BiltyForm = () => {
   const [noOfPackages, setNoOfPackages] = useState(5);
-  const [typeOfBilty, setTypeOfBilty] = useState("Driver Copy");
   const [isPackagesDropDownOpen, setIsPackagesDropDownOpen] = useState(false);
-  const [isTypeDropDownOpen, setIsTypeDropDownOpen] = useState(false);
   const [includeDigitalStamp, setIncludeDigitalStamp] = useState(false);
   const { biltyData, setBiltyData } = useAppContext();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-  const biltyTypes = ["Driver Copy", "Office Copy", "Consignee Copy"];
+  const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
   const handlePackageSelect = (row) => {
     setNoOfPackages(row);
     setIsPackagesDropDownOpen(false);
-  };
-  const handleTypeOfBiltySelect = (type) => {
-    setTypeOfBilty(type);
-    setIsTypeDropDownOpen(false);
   };
 
   const handleNestedChange = (path, value) => {
@@ -52,16 +45,13 @@ const BiltyForm = () => {
   const generatePdf = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://bhandal-roadways-doc-maker.onrender.com/generate-pdf",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ biltyData }),
-        }
-      );
+      const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ biltyData }),
+      });
 
       if (!response.ok) {
         throw new Error(`Server responded with status: ${response.status}`);

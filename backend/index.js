@@ -75,12 +75,11 @@ app.post("/generate-pdf", async (req, res) => {
 app.post("/generate-bill-pdf", async (req, res) => {
   const { billData } = req.body;
   try {
-
     // const BillDataMock = {
     //   // --- General Bill Information ---
     //   billNo: "56",
     //   receipientName: "Siddharth Trading Corp.",
-    //   receipientAddress: "3rd Cross, Industrial Area, Pune, Maharashtra - 411003 3rd Cross, Industrial Area, Pune, Maharashtraa",
+    //   receipientAddress: "",
     //   through: "Hindustan Roadlines",
     //   vehicleNo: "MH-12-DE-5678",
     //   from: "Delhi (NCR)",
@@ -90,11 +89,11 @@ app.post("/generate-bill-pdf", async (req, res) => {
     //   // --- Financial Summary ---
     //   billDetails: {
     //     // Total Freight from all LRs: (59500 + 44000) = 103500.00
-    //     halting: "2000", // Charge for waiting/delay
-    //     extra: "1500", // Miscellaneous charges (e.g., labour)
-    //     total: "107000", // (103500 + 2000 + 1500)
-    //     advance: "40000",
-    //     balance: "67000", // (107000 - 40000)
+    //     halting: "", // Charge for waiting/delay
+    //     extra: "", // Miscellaneous charges (e.g., labour)
+    //     total: "", // (103500 + 2000 + 1500)
+    //     advance: "",
+    //     balance: "", // (107000 - 40000)
     //   },
 
     //   // --- Lorry Receipts (LRs) Detail Array ---
@@ -293,9 +292,9 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.font('Helvetica-Bold')
       .fontSize(12)
       .fillColor('black')
-      .text('Date:', MARGIN_X + 60 + PAGE_WIDTH - 150, box1Y);
+      .text('Date:', MARGIN_X + 50 + PAGE_WIDTH - 150, box1Y);
     doc.font('Helvetica-Bold')
-      .text(date, MARGIN_X + 60 + PAGE_WIDTH - 120, box1Y);
+      .text(date, MARGIN_X + 50 + PAGE_WIDTH - 120, box1Y);
 
     // To
     let receipientX = MARGIN_X + 5;
@@ -409,7 +408,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
             height: RUPEE_ICON_SIZE,
           });
 
-          doc.text(textValue, col.x+15, dataY + 11, {
+          doc.text(textValue, col.x + 15, dataY + 11, {
             width: col.width - (RUPEE_ICON_SIZE + 6),
             align: col.align
           });
@@ -450,28 +449,34 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.moveTo(COL1_END, finalY + 75).lineTo(PAGE_WIDTH + 30, finalY + 75).stroke('black');
     doc.moveTo(COL1_END, finalY + 100).lineTo(PAGE_WIDTH + 30, finalY + 100).stroke('black');
 
+
     // Col 1: E-Way/Invoice/Bank Details
     try {
-      doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 7, {
-        width: RUPEE_ICON_SIZE,
-        height: RUPEE_ICON_SIZE,
-      });
-      doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 30, {
-        width: RUPEE_ICON_SIZE,
-        height: RUPEE_ICON_SIZE,
-      });
-      doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 56, {
-        width: RUPEE_ICON_SIZE,
-        height: RUPEE_ICON_SIZE,
-      });
-      doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 81, {
-        width: RUPEE_ICON_SIZE,
-        height: RUPEE_ICON_SIZE,
-      });
-      doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 109, {
-        width: RUPEE_ICON_SIZE,
-        height: RUPEE_ICON_SIZE,
-      });
+      data.billDetails.halting.length > 0 ?
+        (doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 7, {
+          width: RUPEE_ICON_SIZE,
+          height: RUPEE_ICON_SIZE,
+        })) : null;
+      data.billDetails.extra.length > 0 ?
+        doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 30, {
+          width: RUPEE_ICON_SIZE,
+          height: RUPEE_ICON_SIZE,
+        }) : null;
+      data.billDetails.total.length > 0 ?
+        doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 56, {
+          width: RUPEE_ICON_SIZE,
+          height: RUPEE_ICON_SIZE,
+        }) : null;
+      data.billDetails.advance.length > 0 ?
+        doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 81, {
+          width: RUPEE_ICON_SIZE,
+          height: RUPEE_ICON_SIZE,
+        }) : null;
+      data.billDetails.balance.length > 0 ?
+        doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 109, {
+          width: RUPEE_ICON_SIZE,
+          height: RUPEE_ICON_SIZE,
+        }) : null;
     } catch (e) {
       // Draw a placeholder box if logo is missing
       doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
@@ -479,15 +484,15 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.font('Helvetica-Bold').fontSize(11);
     doc.text(`Note ${data.note1}`, MARGIN_X + 5, finalY + 22);
     doc.text(`Halting`, COL1_END + 15, finalY + 9);
-    doc.text(`${data.billDetails.halting}`, COL1_END + 95, finalY + 9);
+    doc.text(`${data.billDetails.halting.length > 0 ? data.billDetails.halting : "   -"}`, COL1_END + 95, finalY + 9);
     doc.text(`Extra`, COL1_END + 15, finalY + 32);
-    doc.text(`${data.billDetails.extra}`, COL1_END + 95, finalY + 32);
+    doc.text(`${data.billDetails.extra.length > 0 ? data.billDetails.extra : "   -"}`, COL1_END + 95, finalY + 32);
     doc.text(`Total `, COL1_END + 15, finalY + 58);
-    doc.fillColor("red").text(`${data.billDetails.total}`, COL1_END + 95, finalY + 58).fillColor("black");
+    (data.billDetails.total.length > 0 ? doc.fillColor("red") : doc.fillColor("black")).text(`${data.billDetails.total.length > 0 ? data.billDetails.total : "   -"}`, COL1_END + 95, finalY + 58).fillColor("black");
     doc.text(`Advance `, COL1_END + 15, finalY + 83);
-    doc.text(`${data.billDetails.advance}`, COL1_END + 95, finalY + 83);
+    doc.text(`${data.billDetails.advance.length > 0 ? data.billDetails.advance : "   -"}`, COL1_END + 95, finalY + 83);
     doc.text(`Balance `, COL1_END + 15, finalY + 111)
-    doc.fillColor("red").text(`${data.billDetails.balance}`, COL1_END + 95, finalY + 111).fillColor("black")
+    doc.fillColor(`${data.billDetails.balance.length > 0 ? "red" : "black"}`).text(`${data.billDetails.balance.length > 0 ? data.billDetails.balance : "   -"}`, COL1_END + 95, finalY + 111).fillColor("black")
 
     doc.text(`Note: ${data.note2}`, MARGIN_X + 5, finalY + 90);
 
