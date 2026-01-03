@@ -61,6 +61,8 @@ app.post("/generate-pdf", async (req, res) => {
     drawBiltyPage(doc, data, "Driver Copy")
     doc.addPage()
     drawBiltyPage(doc, data, "Consignee Copy")
+    doc.addPage()
+    drawBiltyPage(doc, data, "Consignor Copy")
 
 
 
