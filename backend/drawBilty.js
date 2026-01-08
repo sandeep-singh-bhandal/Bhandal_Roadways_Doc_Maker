@@ -337,7 +337,7 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     const COL3_END = COL2_END + 90; // Balance / To Pay
     const COL4_END = COL3_END + 85; // Balance / To Pay
 
-    doc.moveTo(COL1_END, finalY).lineTo(COL1_END, finalY + finalHeight + 140).stroke('black');
+    doc.moveTo(COL1_END+15, finalY).lineTo(COL1_END+15, finalY + finalHeight + 140).stroke('black');
     doc.moveTo(COL2_END, finalY-20).lineTo(COL2_END, finalY + finalHeight + 65).stroke('black');
     doc.moveTo(COL3_END, finalY).lineTo(COL3_END, finalY + finalHeight + 5).stroke('black');
     doc.moveTo(COL4_END, finalY).lineTo(COL4_END, finalY + finalHeight + 65).stroke('black');
@@ -360,7 +360,7 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     ];
     let termsY = finalY + 5;
     terms.forEach(term => {
-        doc.text(term, COL1_END + 5, termsY, { width: 125 });
+        doc.text(term, COL1_END + 20, termsY, { width: 125 });
         termsY += 36
     });
 

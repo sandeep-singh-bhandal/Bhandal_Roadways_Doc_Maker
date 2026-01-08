@@ -45,13 +45,16 @@ const BiltyForm = () => {
   const generatePdf = async () => {
     setLoading(true);
     try {
-      const response = await fetch("https://bhandal-roadways-doc-maker.onrender.com/generate-pdf", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ biltyData }),
-      });
+      const response = await fetch(
+        "https://bhandal-roadways-doc-maker.onrender.com/generate-pdf",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ biltyData }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Server responded with status: ${response.status}`);
@@ -143,7 +146,7 @@ const BiltyForm = () => {
         {[
           { label: "Lr No", name: "lrNo", type: "text" },
           { label: "Invoice No.", name: "invoiceNo", type: "text" },
-          { label: "E way bill No", name: "eWayBillNo", type: "number" },
+          { label: "E way bill No", name: "eWayBillNo", type: "text" },
           { label: "Truck No", name: "truckNo", type: "text" },
           { label: "From", name: "from", type: "text" },
           { label: "To", name: "to", type: "text" },

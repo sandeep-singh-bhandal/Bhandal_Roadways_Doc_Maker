@@ -40,7 +40,7 @@ app.post("/generate-pdf", async (req, res) => {
   //     { description: "MS STRIPS (72111950)", weight: "17.760", rate: "Fix", freight: "To Pay" },
   //     { description: "RAIPH 49111", weight: "", rate: "", freight: "" }, // Empty row example
   //   ],
-  //   eWayBillNo: "8916722901094", invoiceNo: "SS/25-26/1098", includeDigitalStamp: true,
+  //   eWayBillNo: "8916-7229-0109", invoiceNo: "SS/25-26/1098", includeDigitalStamp: true,
   // };
   try {
     const data = biltyData;
