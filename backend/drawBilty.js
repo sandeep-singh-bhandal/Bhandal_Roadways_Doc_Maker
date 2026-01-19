@@ -3,6 +3,10 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
     const MARGIN_X = 30;
     const PAGE_WIDTH = 595.28 - MARGIN_X * 2;
+    const PAGE_HEIGHT = doc.page.height;
+    const BOTTOM_MARGIN = 30;
+    const TOP_MARGIN_NO_HEADER = 30;
+
     let currentY = 30;
 
     doc.fillColor('black');
@@ -11,6 +15,13 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     const date = new Date().toLocaleDateString("en-GB");
     const totalWeight = data.packages.reduce((acc, item) => acc + (Number(item.weight) || 0), 0).toFixed(3);
 
+
+    const ensureSpace = (requiredHeight) => {
+        if (currentY + requiredHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
+            doc.addPage();
+            currentY = TOP_MARGIN_NO_HEADER; // second page starts clean
+        }
+    };
 
     // --- 2. TOP HEADER (LOGO, TITLE, CONTACTS) ---
 
@@ -210,7 +221,7 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     doc.font('Helvetica-Bold').text(data.consignor.name, consigX + 51, currentY + 5, { underline: true });
 
     doc.font('Helvetica').text('Address:', consigX, currentY + 23);
-    doc.font('Helvetica-Bold').text(data.consignor.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70, underline:true });
+    doc.font('Helvetica-Bold').text(data.consignor.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70, underline: true });
     doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
     doc.font('Helvetica-Bold').text(data.consignor.gstNumber, consigX + 41, consigY + 52, { underline: true });
 
@@ -220,7 +231,7 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     doc.font('Helvetica').text('Consignee:', consigX, currentY + 5);
     doc.font('Helvetica-Bold').text(data.consignee.name, consigX + 51, currentY + 5, { underline: true });
     doc.font('Helvetica').text('Address:', consigX, currentY + 23);
-    doc.font('Helvetica-Bold').text(data.consignee.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70 , underline:true});
+    doc.font('Helvetica-Bold').text(data.consignee.address.trim().split("\n").join(""), consigX + 41, currentY + 23, { width: PAGE_WIDTH / 2 - 70, underline: true });
 
     doc.font('Helvetica').text('GST No:', consigX, consigY + 52);
     doc.font('Helvetica-Bold').text(data.consignee.gstNumber, consigX + 41, consigY + 52, { underline: true });
@@ -267,14 +278,34 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     });
 
     let dataY = tableY + headerHeight;
-    const dataRows = data.packages // Take up to 3 for the main view
+    const FOOTER_RESERVE = 30; // Space needed for the total row and footer
 
-    for (let i = 0; i < dataRows.length; i++) {
-        const rowData = dataRows[i];
+    // Use actual data length instead of hardcoded 25
+    data.packages.forEach((rowData, i) => {
 
-        // Draw Row Border
+        // --- PAGE BREAK LOGIC ---
+        // Check if row exceeds page height minus the footer space
+        if (dataY + rowHeight > PAGE_HEIGHT - FOOTER_RESERVE) {
+            doc.addPage();
+            dataY = TOP_MARGIN_NO_HEADER;
+
+            // Redraw Table Headers on new page
+            doc.font('Helvetica-Bold').fontSize(9);
+            doc.rect(MARGIN_X, dataY, PAGE_WIDTH, headerHeight).fillAndStroke('#f0f0f0', 'black');
+
+            tableColumns.forEach(col => {
+                doc.fillColor('black')
+                    .text(col.name, col.x, dataY + 6, { width: col.width, align: col.align });
+
+                // Vertical lines for header
+                doc.moveTo(col.x + col.width, dataY).lineTo(col.x + col.width, dataY + headerHeight).stroke('black');
+            });
+
+            dataY += headerHeight;
+        }
+
+        // --- DRAW ROW ---
         doc.rect(MARGIN_X, dataY, PAGE_WIDTH, rowHeight).stroke('black');
-
         doc.font('Helvetica-Bold').fontSize(9);
 
         tableColumns.forEach((col, colIndex) => {
@@ -283,7 +314,7 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
             if (col.field === 'index') {
                 textValue = `${i + 1}.`;
             } else if (rowData) {
-                textValue = rowData[col.field];
+                textValue = rowData[col.field] || '';
                 if (col.field === 'weight' && textValue) textValue += ' MT';
             }
 
@@ -297,7 +328,7 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
         });
 
         dataY += rowHeight;
-    }
+    });
 
     currentY = dataY;
 
@@ -337,8 +368,8 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     const COL3_END = COL2_END + 90; // Balance / To Pay
     const COL4_END = COL3_END + 85; // Balance / To Pay
 
-    doc.moveTo(COL1_END+15, finalY).lineTo(COL1_END+15, finalY + finalHeight + 140).stroke('black');
-    doc.moveTo(COL2_END, finalY-20).lineTo(COL2_END, finalY + finalHeight + 65).stroke('black');
+    doc.moveTo(COL1_END + 15, finalY).lineTo(COL1_END + 15, finalY + finalHeight + 140).stroke('black');
+    doc.moveTo(COL2_END, finalY - 20).lineTo(COL2_END, finalY + finalHeight + 65).stroke('black');
     doc.moveTo(COL3_END, finalY).lineTo(COL3_END, finalY + finalHeight + 5).stroke('black');
     doc.moveTo(COL4_END, finalY).lineTo(COL4_END, finalY + finalHeight + 65).stroke('black');
     doc.moveTo(COL3_END, finalY + finalHeight + 65).lineTo(COL3_END, finalY + finalHeight + 140).stroke('black');
