@@ -11,7 +11,7 @@ const BiltyForm = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  const rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
   const handlePackageSelect = (row) => {
     setNoOfPackages(row);
@@ -53,7 +53,7 @@ const BiltyForm = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ biltyData }),
-        }
+        },
       );
 
       if (!response.ok) {
