@@ -43,10 +43,10 @@ const BiltyForm = () => {
   };
 
   const generatePdf = async () => {
-    setLoading(true);
+    setLoading();
     try {
       const response = await fetch(
-        "https://bhandal-roadways-doc-maker.onrender.com/generate-pdf",
+        "https://bhandal-roadways-doc-maker-1t8d.vercel.app/generate-pdf",
         {
           method: "POST",
           headers: {

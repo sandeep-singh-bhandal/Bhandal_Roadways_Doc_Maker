@@ -12,7 +12,7 @@ function App() {
   const awakeBackend = async () => {
     try {
       const res = await fetch(
-        "https://bhandal-roadways-doc-maker.onrender.com/status"
+        "https://bhandal-roadways-doc-maker-1t8d.vercel.app/status"
       );
       const data = await res.json();
       data.success ? setIsBackendAwake(true) : null;
