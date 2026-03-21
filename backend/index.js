@@ -31,6 +31,7 @@ app.get("/status", (req, res) => {
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
   const { biltyData } = req.body;
+  
   // const mockBiltyData = {
   //   lrNo: "77", truckNo: "CG04QA4780", from: "Raipur, Chhattisgarh", to: "Kadodara, Gujarat",
   //   consignor: { name: "SATYAM STEEL", address: "BLOCK-146/C, TANTITHAIYA, KADODARA, BARDOLI ROAD SURAT SUNNY SUNNY SUNNY SUNNY SUNNY Sunny", gstNumber: "22AEGFS8130R1ZK" },
@@ -171,7 +172,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
         width: PAGE_WIDTH - 160,
         align: 'center'
       });
-
+ 
     const PHONE_ICON_SIZE = 14;
     const PHONE_ICON = path.join(PUBLIC_ROOT, 'phone.png');
     try {

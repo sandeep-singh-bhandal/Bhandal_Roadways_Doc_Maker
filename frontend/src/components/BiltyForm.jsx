@@ -43,7 +43,7 @@ const BiltyForm = () => {
   };
 
   const generatePdf = async () => {
-    setLoading();
+    setLoading(true);
     try {
       const response = await fetch(
         "https://bhandal-roadways-doc-maker-1t8d.vercel.app/generate-pdf",

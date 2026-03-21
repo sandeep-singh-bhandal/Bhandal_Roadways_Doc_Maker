@@ -11,6 +11,19 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
     doc.fillColor('black');
     const PUBLIC_ROOT = path.join(process.cwd(), 'public');
+    const fontPath = path.join(PUBLIC_ROOT, 'impact.ttf');
+
+    try {
+        if (fs.existsSync(fontPath)) {
+            doc.registerFont('ImpactCustom', fontPath);
+            doc.font('ImpactCustom');
+        } else {
+            console.warn("Font file not found at:", fontPath);
+            doc.font('Helvetica-Bold'); // Fallback
+        }
+    } catch (e) {
+        doc.font('Helvetica-Bold'); // Final Fallback
+    }
 
     const date = new Date().toLocaleDateString("en-GB");
     const totalWeight = data.packages.reduce((acc, item) => acc + (Number(item.weight) || 0), 0).toFixed(3);
@@ -46,12 +59,22 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
         });
     // Title
-    doc.font('Impact')
-        .fontSize(36)
-        .text('BHANDAL ROADWAYS', MARGIN_X + 80, currentY + 2, {
-            width: PAGE_WIDTH - 160,
-            align: 'center'
-        });
+    try {
+        // Use the registered name from above
+        doc.font(fs.existsSync(fontPath) ? 'ImpactCustom' : 'Helvetica-Bold')
+            .fontSize(36)
+            .text('BHANDAL ROADWAYS', MARGIN_X + 80, currentY + 2, {
+                width: PAGE_WIDTH - 160,
+                align: 'center'
+            });
+    } catch (e) {
+        doc.font('Helvetica-Bold')
+            .fontSize(30)
+            .text('BHANDAL ROADWAYS', MARGIN_X + 80, currentY + 2, {
+                width: PAGE_WIDTH - 160,
+                align: 'center'
+            });
+    }
 
     const PHONE_ICON_SIZE = 14;
     const PHONE_ICON = path.join(PUBLIC_ROOT, 'phone.png');
