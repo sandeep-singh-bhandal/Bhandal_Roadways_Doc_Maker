@@ -49,7 +49,7 @@ app.post("/generate-pdf", async (req, res) => {
     const doc = new PDFDocument({
       size: 'A4',
       margin: 20
-    }); 
+    });
     const PUBLIC_ROOT = path.join(process.cwd(), 'public');
     const fontPath = path.join(PUBLIC_ROOT, 'impact.ttf');
     if (fs.existsSync(fontPath)) { doc.registerFont('Impact', fontPath); }
