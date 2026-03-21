@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "backend/*.js": {
+      "includeFiles": "backend/public/**"
+    }
+  }
+}
