@@ -29,10 +29,15 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     const LOGO_SIZE = 80;
     const LOGO_PATH = path.join(PUBLIC_ROOT, 'logo.png');
     try {
-        doc.image(LOGO_PATH, MARGIN_X, currentY, {
-            width: LOGO_SIZE,
-            height: LOGO_SIZE,
-        });
+        if (fs.existsSync(LOGO_PATH)) {
+            const logoBuffer = fs.readFileSync(LOGO_PATH);
+            doc.image(LOGO_PATH, MARGIN_X, currentY, {
+                width: LOGO_SIZE,
+                height: LOGO_SIZE,
+            });
+        } else {
+            throw new Error("Logo not found");
+        }
     } catch (e) {
         // Draw a placeholder box if logo is missing
         doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();

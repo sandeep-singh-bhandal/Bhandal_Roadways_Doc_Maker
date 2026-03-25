@@ -52,7 +52,15 @@ app.post("/generate-pdf", async (req, res) => {
     });
     const PUBLIC_ROOT = path.join(process.cwd(), 'public');
     const fontPath = path.join(PUBLIC_ROOT, 'impact.ttf');
-    if (fs.existsSync(fontPath)) { doc.registerFont('Impact', fontPath); }
+    if (fs.existsSync(fontPath)) {
+      // Register it with the name 'Impact'
+      doc.registerFont('Impact', fontPath);
+      // Explicitly set it so the rest of the doc uses it
+      doc.font('Impact');
+    } else {
+      console.error("FONT MISSING AT:", fontPath);
+      doc.font('Helvetica-Bold'); // Fallback so it doesn't crash
+    }
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="bilty-preview.pdf"`);
