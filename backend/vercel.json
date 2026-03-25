@@ -1,7 +1,10 @@
 {
   "functions": {
     "index.js": {
-      "includeFiles": "public/impact.ttf"
+      "includeFiles": "public/**"
+    },
+    "drawBilty.js": {
+      "includeFiles": "public/**"
     }
   }
 }
