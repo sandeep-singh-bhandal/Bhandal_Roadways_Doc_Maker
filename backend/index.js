@@ -4,7 +4,7 @@ import cors from "cors";
 import fs from 'fs';
 import path from 'path';
 import PDFDocument from "pdfkit";
-import { drawBiltyPage } from "./drawBilty.js";
+import { drawBiltyPage, getImgBuffer } from "./drawBilty.js";
 
 const app = express();
 
@@ -31,53 +31,40 @@ app.get("/status", (req, res) => {
 // Generate PDF Route
 app.post("/generate-pdf", async (req, res) => {
   const { biltyData } = req.body;
-  // const mockBiltyData = {
-  //   lrNo: "77", truckNo: "CG04QA4780", from: "Raipur, Chhattisgarh", to: "Kadodara, Gujarat",
-  //   consignor: { name: "SATYAM STEEL", address: "BLOCK-146/C, TANTITHAIYA, KADODARA, BARDOLI ROAD SURAT SUNNY SUNNY SUNNY SUNNY SUNNY Sunny", gstNumber: "22AEGFS8130R1ZK" },
-  //   consignee: { name: "STARK INDUSTRIES INDIA", address: "BLOCK-146/C, TANTITHAIYA, KADODARA, BARDOLI ROAD SURAT SU", gstNumber: "24BBCPA6477M1ZI" },
-  //   packages: [
-  //     { description: "SATYAM STEEL", weight: "16.560", rate: "Fix", freight: "To Pay" },
-  //     { description: "MS STRIPS (72111950)", weight: "17.760", rate: "Fix", freight: "To Pay" },
-  //     { description: "RAIPH 49111", weight: "", rate: "", freight: "" }, // Empty row example
-  //   ],
-  //   eWayBillNo: "8916-7229-0109", invoiceNo: "SS/25-26/1098", includeDigitalStamp: true,
-  // };
   try {
-    const data = biltyData;
+    const doc = new PDFDocument({ size: 'A4', margin: 20 });
 
-    // 💡 FIX 2: Define 'date' and 'totalWeight' variables, which were missing.
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 20
-    });
-    const PUBLIC_ROOT = path.join(process.cwd(), 'public');
-    const fontPath = path.join(PUBLIC_ROOT, 'impact.ttf');
-    if (fs.existsSync(fontPath)) {
-      // Register it with the name 'Impact'
-      doc.registerFont('Impact', fontPath);
-      // Explicitly set it so the rest of the doc uses it
-      doc.font('Impact');
-    } else {
-      console.error("FONT MISSING AT:", fontPath);
-      doc.font('Helvetica-Bold'); // Fallback so it doesn't crash
+    // 1. Fetch and Register Font First
+    const fontUrl = 'https://res.cloudinary.com/dybupgtfs/raw/upload/v1774427557/impact_mfhgdd.ttf';
+    const fontBuffer = await getImgBuffer(fontUrl);
+    
+    if (fontBuffer) {
+      doc.registerFont('Impact', fontBuffer);
     }
 
+    // 2. Set Headers
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="bilty-preview.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="bilty.pdf"`);
 
+    // 3. Pipe to response
     doc.pipe(res);
-    drawBiltyPage(doc, data, "Driver Copy")
-    doc.addPage()
-    drawBiltyPage(doc, data, "Consignee Copy")
-    doc.addPage()
-    drawBiltyPage(doc, data, "Consignor Copy")
 
+    // 4. CRITICAL: Use AWAIT for every drawing call
+    await drawBiltyPage(doc, biltyData, "Driver Copy");
+    doc.addPage();
+    await drawBiltyPage(doc, biltyData, "Consignee Copy");
+    doc.addPage();
+    await drawBiltyPage(doc, biltyData, "Consignor Copy");
 
-
+    // 5. End the document
     doc.end();
+
+    // 6. Vercel/Express Safety: Wait for the stream to fully flush
+    await new Promise((resolve) => res.on('finish', resolve));
+
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error generating PDF");
+    console.error("PDF Generation Error:", err);
+    if (!res.headersSent) res.status(500).send("Error generating PDF");
   }
 });
 

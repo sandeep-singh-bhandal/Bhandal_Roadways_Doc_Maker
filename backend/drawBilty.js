@@ -1,5 +1,17 @@
 import path from 'path';
-export const drawBiltyPage = (doc, data, copyLabel) => {
+import axios from "axios"
+
+export const getImgBuffer = async (url) => {
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        return Buffer.from(response.data);
+    } catch (error) {
+        console.error(`Cloudinary Fetch Error for ${url}:`, error.message);
+        return null;
+    }
+};
+
+export const drawBiltyPage = async (doc, data, copyLabel) => {
 
     const MARGIN_X = 30;
     const PAGE_WIDTH = 595.28 - MARGIN_X * 2;
@@ -15,7 +27,6 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
     const date = new Date().toLocaleDateString("en-GB");
     const totalWeight = data.packages.reduce((acc, item) => acc + (Number(item.weight) || 0), 0).toFixed(3);
 
-
     const ensureSpace = (requiredHeight) => {
         if (currentY + requiredHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
             doc.addPage();
@@ -27,10 +38,12 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
     // Logo (Approximate Positioning)
     const LOGO_SIZE = 80;
-    const LOGO_PATH = path.join(PUBLIC_ROOT, 'logo.png');
+    // const LOGO_PATH = path.join(PUBLIC_ROOT, 'logo.png');
+    const logoUrl = 'https://res.cloudinary.com/dybupgtfs/image/upload/v1774427591/logo_yehw0q.png'
+    const LOGO_PATH = await getImgBuffer(logoUrl)
+
     try {
-        if (fs.existsSync(LOGO_PATH)) {
-            const logoBuffer = fs.readFileSync(LOGO_PATH);
+        if (LOGO_PATH) {
             doc.image(LOGO_PATH, MARGIN_X, currentY, {
                 width: LOGO_SIZE,
                 height: LOGO_SIZE,
@@ -59,7 +72,8 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
         });
 
     const PHONE_ICON_SIZE = 14;
-    const PHONE_ICON = path.join(PUBLIC_ROOT, 'phone.png');
+    const phoneUrl = 'https://res.cloudinary.com/dybupgtfs/image/upload/v1774427590/phone_yopprj.png'
+    const PHONE_ICON = await getImgBuffer(phoneUrl)
     try {
         doc.image(PHONE_ICON, MARGIN_X + 450, currentY - 4, {
             width: PHONE_ICON_SIZE,
@@ -112,7 +126,8 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
 
     const LOCATION_ICON_SIZE = 15;
-    const LOCATION_ICON = path.join(PUBLIC_ROOT, 'location.png');
+    const locationUrl = 'https://res.cloudinary.com/dybupgtfs/image/upload/v1774427589/location_wtqkq9.png'
+    const LOCATION_ICON = await getImgBuffer(locationUrl);
     try {
         doc.image(LOCATION_ICON, MARGIN_X + 85, currentY + 6, {
             width: LOCATION_ICON_SIZE,
@@ -129,7 +144,8 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
     currentY += 16;
     const MAIL_ICON_SIZE = 14;
-    const MAIL_ICON = path.join(PUBLIC_ROOT, 'mail.png');
+    let mailIcon = 'https://res.cloudinary.com/dybupgtfs/image/upload/v1774427590/mail_u76gp3.png'
+    const MAIL_ICON = await getImgBuffer(mailIcon);
     try {
         doc.image(MAIL_ICON, MARGIN_X + 185, currentY - 4, {
             width: MAIL_ICON_SIZE,
@@ -412,7 +428,9 @@ export const drawBiltyPage = (doc, data, copyLabel) => {
 
     // Digital Stamp Area
     if (data.includeDigitalStamp) {
-        const STAMP_PATH = path.join(PUBLIC_ROOT, 'stamp.jpg');
+        const stampUrl = 'https://res.cloudinary.com/dybupgtfs/image/upload/v1774427579/stamp_kw0ine.jpg'
+        const STAMP_PATH = await getImgBuffer(stampUrl)
+        // const STAMP_PATH = path.join(PUBLIC_ROOT, 'stamp.jpg');
         try {
             // Replace with your actual stamp path
             doc.image(STAMP_PATH, COL3_END + 70, finalY + 100, { width: 50, height: 50 });
