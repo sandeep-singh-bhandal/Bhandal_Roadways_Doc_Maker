@@ -552,7 +552,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
         field: "rate",
       },
       {
-        name: "Freightx",
+        name: "Freight",
         width: 75,
         align: "center",
         field: "freight",
