@@ -940,7 +940,6 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text("Total", COL1_END + 15, finalY + 58);
 
     doc
-      .fillColor(total.length > 0 ? "red" : "black")
       .text(total.length > 0 ? total : "   -", COL1_END + 95, finalY + 58)
       .fillColor("black");
 
@@ -955,7 +954,6 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text("Balance", COL1_END + 15, finalY + 111);
 
     doc
-      .fillColor(balance.length > 0 ? "red" : "black")
       .text(balance.length > 0 ? balance : "   -", COL1_END + 95, finalY + 111)
       .fillColor("black");
 
