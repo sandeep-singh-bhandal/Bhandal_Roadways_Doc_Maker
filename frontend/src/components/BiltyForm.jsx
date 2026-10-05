@@ -46,7 +46,7 @@ const BiltyForm = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://bhandal-roadways-doc-maker-1t8d.vercel.app/generate-pdf",
+        "https://bhandal-roadways-doc-maker-yyzt.vercel.app/generate-pdf",
         {
           method: "POST",
           headers: {
