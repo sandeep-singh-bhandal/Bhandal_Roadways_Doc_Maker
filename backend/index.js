@@ -99,10 +99,11 @@ app.post("/generate-bill-pdf", async (req, res) => {
     const FONT_URL =
       "https://res.cloudinary.com/dybupgtfs/raw/upload/v1774427557/impact_mfhgdd.ttf";
 
+    const RUPEE_ICON_URL =
+      "https://res.cloudinary.com/dybupgtfs/image/upload/v1774427590/rupee_r1konz.png";
+
     // Bilty page code me in dono ke Cloudinary URLs nahi diye gaye the.
     // Inhe apne actual Cloudinary URLs se replace kar dena.
-    const RUPEE_ICON_URL = null;
-    const RUPEE_ICON_RED_URL = null;
 
     // =========================================================
     // CLOUDINARY BUFFER HELPER
@@ -140,7 +141,6 @@ app.post("/generate-bill-pdf", async (req, res) => {
       stampBuffer,
       fontBuffer,
       rupeeIconBuffer,
-      rupeeIconRedBuffer,
     ] = await Promise.all([
       getImgBuffer(LOGO_URL),
       getImgBuffer(PHONE_ICON_URL),
@@ -149,7 +149,6 @@ app.post("/generate-bill-pdf", async (req, res) => {
       getImgBuffer(STAMP_URL),
       getImgBuffer(FONT_URL),
       getImgBuffer(RUPEE_ICON_URL),
-      getImgBuffer(RUPEE_ICON_RED_URL),
     ]);
 
     const doc = new PDFDocument({
@@ -871,9 +870,9 @@ app.post("/generate-bill-pdf", async (req, res) => {
 
       if (
         String(data.billDetails?.total || "").length > 0 &&
-        rupeeIconRedBuffer
+        rupeeIconBuffer
       ) {
-        doc.image(rupeeIconRedBuffer, MARGIN_X + 472, currentY + 56, {
+        doc.image(rupeeIconBuffer, MARGIN_X + 472, currentY + 56, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
@@ -891,9 +890,9 @@ app.post("/generate-bill-pdf", async (req, res) => {
 
       if (
         String(data.billDetails?.balance || "").length > 0 &&
-        rupeeIconRedBuffer
+        rupeeIconBuffer
       ) {
-        doc.image(rupeeIconRedBuffer, MARGIN_X + 472, currentY + 109, {
+        doc.image(rupeeIconBuffer, MARGIN_X + 472, currentY + 109, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
