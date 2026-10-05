@@ -76,6 +76,82 @@ app.post("/generate-bill-pdf", async (req, res) => {
 
     const date = new Date().toLocaleDateString("en-GB");
 
+    // =========================================================
+    // CLOUDINARY ASSETS
+    // SAME URLs AS BILTY PAGE
+    // =========================================================
+
+    const LOGO_URL =
+      "https://res.cloudinary.com/dybupgtfs/image/upload/v1774427591/logo_yehw0q.png";
+
+    const PHONE_ICON_URL =
+      "https://res.cloudinary.com/dybupgtfs/image/upload/v1774427590/phone_yopprj.png";
+
+    const LOCATION_ICON_URL =
+      "https://res.cloudinary.com/dybupgtfs/image/upload/v1774427589/location_wtqkq9.png";
+
+    const MAIL_ICON_URL =
+      "https://res.cloudinary.com/dybupgtfs/image/upload/v1774427590/mail_u76gp3.png";
+
+    const STAMP_URL =
+      "https://res.cloudinary.com/dybupgtfs/image/upload/v1774427579/stamp_kw0ine.jpg";
+
+    const FONT_URL =
+      "https://res.cloudinary.com/dybupgtfs/raw/upload/v1774427557/impact_mfhgdd.ttf";
+
+    // Bilty page code me in dono ke Cloudinary URLs nahi diye gaye the.
+    // Inhe apne actual Cloudinary URLs se replace kar dena.
+    const RUPEE_ICON_URL = null;
+    const RUPEE_ICON_RED_URL = null;
+
+    // =========================================================
+    // CLOUDINARY BUFFER HELPER
+    // =========================================================
+
+    const getImgBuffer = async (url) => {
+      if (!url) return null;
+
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+
+        return Buffer.from(arrayBuffer);
+      } catch (error) {
+        console.error(`Cloudinary Fetch Error for ${url}:`, error.message);
+
+        return null;
+      }
+    };
+
+    // =========================================================
+    // FETCH ALL ASSETS
+    // =========================================================
+
+    const [
+      logoBuffer,
+      phoneIconBuffer,
+      locationIconBuffer,
+      mailIconBuffer,
+      stampBuffer,
+      fontBuffer,
+      rupeeIconBuffer,
+      rupeeIconRedBuffer,
+    ] = await Promise.all([
+      getImgBuffer(LOGO_URL),
+      getImgBuffer(PHONE_ICON_URL),
+      getImgBuffer(LOCATION_ICON_URL),
+      getImgBuffer(MAIL_ICON_URL),
+      getImgBuffer(STAMP_URL),
+      getImgBuffer(FONT_URL),
+      getImgBuffer(RUPEE_ICON_URL),
+      getImgBuffer(RUPEE_ICON_RED_URL),
+    ]);
+
     const doc = new PDFDocument({
       size: "A4",
       margin: 20,
@@ -95,13 +171,13 @@ app.post("/generate-bill-pdf", async (req, res) => {
 
     let currentY = 30;
 
-    const PUBLIC_ROOT = path.join(process.cwd(), "public");
-
     // Register custom font
-    try {
-      doc.registerFont("Impact", path.join(PUBLIC_ROOT, "impact.ttf"));
-    } catch (e) {
-      console.warn("Custom font not found");
+    if (fontBuffer) {
+      try {
+        doc.registerFont("Impact", fontBuffer);
+      } catch (e) {
+        console.warn("Custom font registration failed");
+      }
     }
 
     // =========================================================
@@ -118,14 +194,17 @@ app.post("/generate-bill-pdf", async (req, res) => {
     // ---------------------------------------------------------
 
     const LOGO_SIZE = 80;
-    const LOGO_PATH = path.join(PUBLIC_ROOT, "logo.png");
 
-    try {
-      doc.image(LOGO_PATH, MARGIN_X + 10, currentY + 5, {
-        width: LOGO_SIZE,
-        height: LOGO_SIZE,
-      });
-    } catch (e) {
+    if (logoBuffer) {
+      try {
+        doc.image(logoBuffer, MARGIN_X + 10, currentY + 5, {
+          width: LOGO_SIZE,
+          height: LOGO_SIZE,
+        });
+      } catch (e) {
+        doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
+      }
+    } else {
       doc.rect(MARGIN_X, currentY, LOGO_SIZE, LOGO_SIZE).stroke();
     }
 
@@ -146,15 +225,16 @@ app.post("/generate-bill-pdf", async (req, res) => {
     // ---------------------------------------------------------
 
     const PHONE_ICON_SIZE = 14;
-    const PHONE_ICON = path.join(PUBLIC_ROOT, "phone.png");
 
-    try {
-      doc.image(PHONE_ICON, MARGIN_X + 435, currentY + 11, {
-        width: PHONE_ICON_SIZE,
-        height: PHONE_ICON_SIZE,
-      });
-    } catch (e) {
-      // Ignore missing icon
+    if (phoneIconBuffer) {
+      try {
+        doc.image(phoneIconBuffer, MARGIN_X + 435, currentY + 11, {
+          width: PHONE_ICON_SIZE,
+          height: PHONE_ICON_SIZE,
+        });
+      } catch (e) {
+        // Ignore missing icon
+      }
     }
 
     // ---------------------------------------------------------
@@ -214,15 +294,16 @@ app.post("/generate-bill-pdf", async (req, res) => {
     // ---------------------------------------------------------
 
     const LOCATION_ICON_SIZE = 15;
-    const LOCATION_ICON = path.join(PUBLIC_ROOT, "location.png");
 
-    try {
-      doc.image(LOCATION_ICON, MARGIN_X + 85, currentY + 5, {
-        width: LOCATION_ICON_SIZE,
-        height: LOCATION_ICON_SIZE,
-      });
-    } catch (e) {
-      // Ignore missing icon
+    if (locationIconBuffer) {
+      try {
+        doc.image(locationIconBuffer, MARGIN_X + 85, currentY + 5, {
+          width: LOCATION_ICON_SIZE,
+          height: LOCATION_ICON_SIZE,
+        });
+      } catch (e) {
+        // Ignore missing icon
+      }
     }
 
     currentY += 10;
@@ -247,15 +328,16 @@ app.post("/generate-bill-pdf", async (req, res) => {
     currentY += 16;
 
     const MAIL_ICON_SIZE = 14;
-    const MAIL_ICON = path.join(PUBLIC_ROOT, "mail.png");
 
-    try {
-      doc.image(MAIL_ICON, MARGIN_X + 185, currentY - 4, {
-        width: MAIL_ICON_SIZE,
-        height: MAIL_ICON_SIZE,
-      });
-    } catch (e) {
-      // Ignore missing icon
+    if (mailIconBuffer) {
+      try {
+        doc.image(mailIconBuffer, MARGIN_X + 185, currentY - 4, {
+          width: MAIL_ICON_SIZE,
+          height: MAIL_ICON_SIZE,
+        });
+      } catch (e) {
+        // Ignore missing icon
+      }
     }
 
     doc
@@ -349,6 +431,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text(recipientName, recipientNameX, box1Y + 23);
 
     // Recipient name underline
+
     const recipientNameWidth = doc.widthOfString(recipientName);
 
     doc
@@ -367,11 +450,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     });
 
     // Address underline
-    //
-    // This works correctly when address fits on one line.
-    // For wrapped addresses, the existing box height logic
-    // already gives extra space.
-    //
+
     const recipientAddressWidth = doc.widthOfString(recipientAddress);
 
     const maxAddressWidth = PAGE_WIDTH - 5;
@@ -393,12 +472,14 @@ app.post("/generate-bill-pdf", async (req, res) => {
     currentY = box1Y + box1Height + (recipientAddress.length > 100 ? 40 : 20);
 
     // Horizontal separator
+
     doc
       .moveTo(MARGIN_X, currentY - 10)
       .lineTo(PAGE_WIDTH + 30, currentY - 10)
       .stroke();
 
     // Vertical separator
+
     doc
       .moveTo((PAGE_WIDTH + 60) / 2, currentY - 10)
       .lineTo((PAGE_WIDTH + 60) / 2, currentY + box1Height + 30)
@@ -420,6 +501,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     let consigX = MARGIN_X + 5;
 
     // Vehicle No.
+
     doc.text("Vehicle No:", consigX, currentY + 8);
 
     const vehicleX = consigX + 66;
@@ -429,6 +511,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text(vehicleText, vehicleX, currentY + 8);
 
     // Vehicle underline
+
     const vehicleWidth = doc.widthOfString(vehicleText);
 
     doc
@@ -449,6 +532,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text(throughText, throughX, currentY + 32);
 
     // Through underline
+
     const throughWidth = doc.widthOfString(throughText);
 
     doc
@@ -463,6 +547,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     consigX = MARGIN_X + PAGE_WIDTH / 2 + 5;
 
     // From
+
     doc.text("From:", consigX, currentY + 8);
 
     const fromX = consigX + 34;
@@ -472,6 +557,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text(fromText, fromX, currentY + 8);
 
     // From underline
+
     const fromWidth = doc.widthOfString(fromText);
 
     doc
@@ -492,6 +578,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.text(toText, toX, currentY + 32);
 
     // To underline
+
     const toWidth = doc.widthOfString(toText);
 
     doc
@@ -561,13 +648,9 @@ app.post("/generate-bill-pdf", async (req, res) => {
 
     const RUPEE_ICON_SIZE = 12;
 
-    const RUPEE_ICON = path.join(PUBLIC_ROOT, "rupee.png");
-
-    const RUPEE_ICON_RED = path.join(PUBLIC_ROOT, "rupee-red.png");
-
-    // ---------------------------------------------------------
+    // =========================================================
     // COLUMN X POSITIONS
-    // ---------------------------------------------------------
+    // =========================================================
 
     let columnStart = MARGIN_X;
 
@@ -622,6 +705,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
       const rowData = dataRows[i];
 
       // Row border
+
       doc.rect(MARGIN_X, dataY, PAGE_WIDTH, rowHeight).stroke("black");
 
       tableColumns.forEach((col, colIndex) => {
@@ -630,6 +714,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
         textValue = String(textValue);
 
         // Weight
+
         if (col.field === "weight" && textValue) {
           textValue += " MT";
         }
@@ -663,13 +748,15 @@ app.post("/generate-bill-pdf", async (req, res) => {
         // =================================================
 
         if ((col.field === "rate" || col.field === "freight") && textValue) {
-          try {
-            doc.image(RUPEE_ICON, col.x + 15, dataY + 10, {
-              width: RUPEE_ICON_SIZE,
-              height: RUPEE_ICON_SIZE,
-            });
-          } catch (e) {
-            // Ignore missing rupee icon
+          if (rupeeIconBuffer) {
+            try {
+              doc.image(rupeeIconBuffer, col.x + 15, dataY + 10, {
+                width: RUPEE_ICON_SIZE,
+                height: RUPEE_ICON_SIZE,
+              });
+            } catch (e) {
+              // Ignore missing icon
+            }
           }
 
           doc.text(textValue, col.x + 15, dataY + 11, {
@@ -727,6 +814,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
     const COL1_END = MARGIN_X + 390;
 
     // Vertical lines
+
     doc
       .moveTo(COL1_END, finalY)
       .lineTo(COL1_END, finalY + finalHeight + 5)
@@ -738,6 +826,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
       .stroke("black");
 
     // Horizontal lines
+
     doc
       .moveTo(COL1_END, finalY + 25)
       .lineTo(PAGE_WIDTH + 30, finalY + 25)
@@ -763,36 +852,48 @@ app.post("/generate-bill-pdf", async (req, res) => {
     // =========================================================
 
     try {
-      if (String(data.billDetails?.halting || "").length > 0) {
-        doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 7, {
+      if (
+        String(data.billDetails?.halting || "").length > 0 &&
+        rupeeIconBuffer
+      ) {
+        doc.image(rupeeIconBuffer, MARGIN_X + 472, currentY + 7, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
       }
 
-      if (String(data.billDetails?.extra || "").length > 0) {
-        doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 30, {
+      if (String(data.billDetails?.extra || "").length > 0 && rupeeIconBuffer) {
+        doc.image(rupeeIconBuffer, MARGIN_X + 472, currentY + 30, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
       }
 
-      if (String(data.billDetails?.total || "").length > 0) {
-        doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 56, {
+      if (
+        String(data.billDetails?.total || "").length > 0 &&
+        rupeeIconRedBuffer
+      ) {
+        doc.image(rupeeIconRedBuffer, MARGIN_X + 472, currentY + 56, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
       }
 
-      if (String(data.billDetails?.advance || "").length > 0) {
-        doc.image(RUPEE_ICON, MARGIN_X + 472, currentY + 81, {
+      if (
+        String(data.billDetails?.advance || "").length > 0 &&
+        rupeeIconBuffer
+      ) {
+        doc.image(rupeeIconBuffer, MARGIN_X + 472, currentY + 81, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
       }
 
-      if (String(data.billDetails?.balance || "").length > 0) {
-        doc.image(RUPEE_ICON_RED, MARGIN_X + 472, currentY + 109, {
+      if (
+        String(data.billDetails?.balance || "").length > 0 &&
+        rupeeIconRedBuffer
+      ) {
+        doc.image(rupeeIconRedBuffer, MARGIN_X + 472, currentY + 109, {
           width: RUPEE_ICON_SIZE,
           height: RUPEE_ICON_SIZE,
         });
@@ -820,19 +921,23 @@ app.post("/generate-bill-pdf", async (req, res) => {
     doc.font("Helvetica-Bold").fontSize(11).fillColor("black");
 
     // Note 1
+
     doc.text(`Note ${data.note1 || ""}`, MARGIN_X + 5, finalY + 22);
 
     // Halting
+
     doc.text("Halting", COL1_END + 15, finalY + 9);
 
     doc.text(halting.length > 0 ? halting : "   -", COL1_END + 95, finalY + 9);
 
     // Extra
+
     doc.text("Extra", COL1_END + 15, finalY + 32);
 
     doc.text(extra.length > 0 ? extra : "   -", COL1_END + 95, finalY + 32);
 
     // Total
+
     doc.text("Total", COL1_END + 15, finalY + 58);
 
     doc
@@ -841,11 +946,13 @@ app.post("/generate-bill-pdf", async (req, res) => {
       .fillColor("black");
 
     // Advance
+
     doc.text("Advance", COL1_END + 15, finalY + 83);
 
     doc.text(advance.length > 0 ? advance : "   -", COL1_END + 95, finalY + 83);
 
     // Balance
+
     doc.text("Balance", COL1_END + 15, finalY + 111);
 
     doc
@@ -854,6 +961,7 @@ app.post("/generate-bill-pdf", async (req, res) => {
       .fillColor("black");
 
     // Note 2
+
     doc.text(`Note: ${data.note2 || ""}`, MARGIN_X + 5, finalY + 90);
 
     // =========================================================
@@ -897,13 +1005,15 @@ app.post("/generate-bill-pdf", async (req, res) => {
     // =========================================================
 
     if (data.includeDigitalStamp) {
-      const STAMP_PATH = path.join(PUBLIC_ROOT, "stamp.jpg");
-
       try {
-        doc.image(STAMP_PATH, COL1_END + 70, finalY + finalHeight + 10, {
-          width: 50,
-          height: 50,
-        });
+        if (stampBuffer) {
+          doc.image(stampBuffer, COL1_END + 70, finalY + finalHeight + 10, {
+            width: 50,
+            height: 50,
+          });
+        } else {
+          doc.rect(COL1_END + 20, finalY + 55, 40, 40).stroke();
+        }
       } catch (e) {
         doc.rect(COL1_END + 20, finalY + 55, 40, 40).stroke();
       }
@@ -924,17 +1034,6 @@ app.post("/generate-bill-pdf", async (req, res) => {
 
     // =========================================================
     // DYNAMIC OUTER BORDER
-    // =========================================================
-    //
-    // OLD:
-    // data.receipientAddress.length > 100 ? 710 : 690
-    //
-    // NEW:
-    // Outer border starts at Y = 24 and ends exactly at the
-    // bottom section's bottom line.
-    //
-    // Since finalY depends on dataRows.length,
-    // the border automatically grows with number of LRs.
     // =========================================================
 
     const outerBorderTop = 30 - 6;
